@@ -9,113 +9,9 @@ const {
   formatPlusOneHour,
 } = require("./dateFormatting");
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
-
-const locations = [
-  {
-    administrativeArea: "Seoul",
-    capitalNX: 60,
-    capitalNY: 127,
-    koreanName: "서울",
-  },
-  {
-    administrativeArea: "Busan",
-    capitalNX: 98,
-    capitalNY: 76,
-    koreanName: "부산",
-  },
-  {
-    administrativeArea: "Daegu",
-    capitalNX: 89,
-    capitalNY: 90,
-    koreanName: "대구",
-  },
-  {
-    administrativeArea: "Incheon",
-    capitalNX: 55,
-    capitalNY: 124,
-    koreanName: "인천",
-  },
-  {
-    administrativeArea: "Gwangju",
-    capitalNX: 58,
-    capitalNY: 74,
-    koreanName: "광주",
-  },
-  {
-    administrativeArea: "Daejeon",
-    capitalNX: 67,
-    capitalNY: 100,
-    koreanName: "대전",
-  },
-  {
-    administrativeArea: "Ulsan",
-    capitalNX: 102,
-    capitalNY: 84,
-    koreanName: "울산",
-  },
-  {
-    administrativeArea: "Sejong-si",
-    capitalNX: 66,
-    capitalNY: 103,
-    koreanName: "세종",
-  },
-  {
-    administrativeArea: "Gyeonggi-do",
-    capitalNX: 60,
-    capitalNY: 120,
-    koreanName: "경기도",
-  },
-  {
-    administrativeArea: "Gangwon-do",
-    capitalNX: 73,
-    capitalNY: 134,
-    koreanName: "강원도",
-  },
-  {
-    administrativeArea: "Chungcheongbuk-do",
-    capitalNX: 69,
-    capitalNY: 107,
-    koreanName: "충청북도",
-  },
-  {
-    administrativeArea: "Chungcheongnam-do",
-    capitalNX: 68,
-    capitalNY: 100,
-    koreanName: "충청남도",
-  },
-  {
-    administrativeArea: "Jeollabuk-do",
-    capitalNX: 63,
-    capitalNY: 89,
-    koreanName: "전라북도",
-  },
-  {
-    administrativeArea: "Jeollanam-do",
-    capitalNX: 51,
-    capitalNY: 67,
-    koreanName: "전라남도",
-  },
-  {
-    administrativeArea: "Gyeongsangbuk-do",
-    capitalNX: 89,
-    capitalNY: 91,
-    koreanName: "경상북도",
-  },
-  {
-    administrativeArea: "Gyeongsangnam-do",
-    capitalNX: 91,
-    capitalNY: 77,
-    koreanName: "경상남도",
-  },
-  {
-    administrativeArea: "Jeju-do",
-    capitalNX: 52,
-    capitalNY: 38,
-    koreanName: "제주",
-  },
-];
-async function mergeLocationsData(locationData) {
-  const matchedPlace = locations.filter(
+const { CAPITAL_LOCATION } = require("./locations");
+async function mergeLocationsData(capitalLocationData, locationData) {
+  const matchedPlace = capitalLocationData.filter(
     (location) =>
       location.administrativeArea === locationData.administrativeArea
   );
@@ -205,7 +101,7 @@ function getLocationObj(usage, location) {
   }
   if (usage === "DB") {
     ({ capitalNX, capitalNY, administrativeArea, koreanName } = location);
-    console.log(location);
+
     return {
       usage,
       capitalNX,
@@ -226,7 +122,6 @@ function getUrlAndMergedObject(locationObj, timeObj) {
   } else if (usage === "DB") {
     ({ capitalNX, capitalNY } = locationObj);
   }
-  // console.log(locationObj);
 
   const { dataType, year, month, day, hour, minute } = timeObj;
 
@@ -261,10 +156,10 @@ function getUrlAndMergedObject(locationObj, timeObj) {
 
 async function fetchWeatherData(usage, dataType, location) {
   const locationObj = getLocationObj(usage, location);
-  console.log(locationObj);
+
   const timeObj = getTimeObj(dataType);
   const urlAndMergedObj = getUrlAndMergedObject(locationObj, timeObj);
-  // console.log(urlAndMergedObj);
+
   const { url } = urlAndMergedObj;
   try {
     const response = await fetch(url);
@@ -281,7 +176,8 @@ async function fetchWeatherData(usage, dataType, location) {
     const items = jObj.response.body.items;
     return {
       dataType,
-      urlAndMergedObj,
+      usage,
+      ...urlAndMergedObj,
       ...items,
     };
   } catch (error) {
@@ -324,7 +220,7 @@ async function processLocationData() {
 
 fetchLocationsData().then((locations) => {
   locations.forEach((location) => {
-    mergeLocationsData(location).then((mergedLocation) => {
+    mergeLocationsData(CAPITAL_LOCATION, location).then((mergedLocation) => {
       fetchWeatherData("client", "pastData", mergedLocation).then((data) =>
         console.log(data)
       );
