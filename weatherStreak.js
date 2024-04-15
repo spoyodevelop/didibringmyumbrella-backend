@@ -11,43 +11,53 @@ const {
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
 
 const locations = [
-  { administrativeArea: "Seoul", nx: 60, ny: 127, midarea: "서울" },
-  { administrativeArea: "Busan", nx: 98, ny: 76, midarea: "부산" },
-  { administrativeArea: "Daegu", nx: 89, ny: 90, midarea: "대구" },
-  { administrativeArea: "Incheon", nx: 55, ny: 124, midarea: "인천" },
-  { administrativeArea: "Gwangju", nx: 58, ny: 74, midarea: "광주" },
-  { administrativeArea: "Daejeon", nx: 67, ny: 100, midarea: "대전" },
-  { administrativeArea: "Ulsan", nx: 102, ny: 84, midarea: "울산" },
-  { administrativeArea: "Sejong-si", nx: 66, ny: 103, midarea: "세종" },
-  { administrativeArea: "Gyeonggi-do", nx: 60, ny: 120, midarea: "수원" },
-  { administrativeArea: "Gangwon-do", nx: 73, ny: 134, midarea: "속초" },
+  { administrativeArea: "Seoul", nx: 60, ny: 127, koreanName: "서울" },
+  { administrativeArea: "Busan", nx: 98, ny: 76, koreanName: "부산" },
+  { administrativeArea: "Daegu", nx: 89, ny: 90, koreanName: "대구" },
+  { administrativeArea: "Incheon", nx: 55, ny: 124, koreanName: "인천" },
+  { administrativeArea: "Gwangju", nx: 58, ny: 74, koreanName: "광주" },
+  { administrativeArea: "Daejeon", nx: 67, ny: 100, koreanName: "대전" },
+  { administrativeArea: "Ulsan", nx: 102, ny: 84, koreanName: "울산" },
+  { administrativeArea: "Sejong-si", nx: 66, ny: 103, koreanName: "세종" },
+  { administrativeArea: "Gyeonggi-do", nx: 60, ny: 120, koreanName: "경기도" },
+  { administrativeArea: "Gangwon-do", nx: 73, ny: 134, koreanName: "강원도" },
   {
     administrativeArea: "Chungcheongbuk-do",
     nx: 69,
     ny: 107,
-    midarea: "청주",
+    koreanName: "충청북도",
   },
   {
     administrativeArea: "Chungcheongnam-do",
     nx: 68,
     ny: 100,
-    midarea: "홍성",
+    koreanName: "충청남도",
   },
-  { administrativeArea: "Jeollabuk-do", nx: 63, ny: 89, midarea: "전주" },
-  { administrativeArea: "Jeollanam-do", nx: 51, ny: 67, midarea: "무안" },
+  {
+    administrativeArea: "Jeollabuk-do",
+    nx: 63,
+    ny: 89,
+    koreanName: "전라북도",
+  },
+  {
+    administrativeArea: "Jeollanam-do",
+    nx: 51,
+    ny: 67,
+    koreanName: "전라남도",
+  },
   {
     administrativeArea: "Gyeongsangbuk-do",
     nx: 89,
     ny: 91,
-    midarea: "안동",
+    koreanName: "경상북도",
   },
   {
     administrativeArea: "Gyeongsangnam-do",
     nx: 91,
     ny: 77,
-    midarea: "창원",
+    koreanName: "경상남도",
   },
-  { administrativeArea: "Jeju-do", nx: 52, ny: 38, midarea: "제주" },
+  { administrativeArea: "Jeju-do", nx: 52, ny: 38, koreanName: "제주" },
 ];
 async function mergeLocationsData() {
   try {
@@ -96,21 +106,92 @@ function dummyDataGen() {
   // 결과 출력
   return timeArray;
 }
-
-async function fetchWeatherData(type, location) {
-  let url;
-  const { nx, ny, administrativeArea, convertedX, convertedY } = location;
+function getTimeObj(timeType) {
   let year, month, day, hour, minute;
 
-  if (type === "currentData") {
+  if (timeType === "currentData") {
     ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
-  } else if (type === "pastData") {
+  } else if (timeType === "pastData") {
     ({ year, month, day, hour, minute } = getCurrentBaseDate());
+  }
+  return { timeType, year, month, day, hour, minute };
+}
+function getLocationObj(usage, location) {
+  let nx, ny, administrativeArea, convertedX, convertedY, koreanName;
+  if (usage === "client") {
+    ({ nx, ny, administrativeArea, convertedX, convertedY, koreanName } =
+      location);
+    (nx = convertedX), (ny = convertedY);
+  }
+  if (usage === "DB") {
+    ({ nx, ny, administrativeArea, koreanName } = location);
+  }
+  return {
+    usage,
+    nx,
+    ny,
+    administrativeArea,
+    convertedX: convertedX ? convertedX : nx,
+    convertedY: convertedY ? convertedY : ny,
+    koreanName,
+  };
+}
+function getUrlAndMergedObject(locationObj, timeObj) {
+  let url;
+  const {
+    usage,
+    ny,
+    nx,
+    administrativeArea,
+    convertedX: convertedXValue,
+    convertedY: convertedYValue,
+    koreanName,
+  } = locationObj;
+
+  const convertedX = "convertedX" in locationObj ? convertedXValue : undefined;
+  const convertedY = "convertedY" in locationObj ? convertedYValue : undefined;
+  const { timeType, year, month, day, hour, minute } = timeObj;
+  if (timeType === "pastData") {
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
+  } else {
     url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
   }
 
-  // console.log(url);
+  return {
+    usage,
+    url,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    nx,
+    ny,
+    administrativeArea,
+    koreanName,
+    convertedX: convertedX ? convertedX : undefined,
+    convertedY: convertedY ? convertedY : undefined,
+  };
+}
+async function fetchWeatherData(usage, timeType, location) {
+  const locationObj = getLocationObj(usage, location);
+  const timeObj = getTimeObj(timeType);
+  const urlAndMergedObj = getUrlAndMergedObject(locationObj, timeObj);
+  const {
+    url,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    nx,
+    ny,
+    administrativeArea,
+    koreanName,
+    convertedX,
+    convertedY,
+  } = urlAndMergedObj;
+  console.log(url);
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -133,6 +214,7 @@ async function fetchWeatherData(type, location) {
       hour,
       minute,
       administrativeArea,
+      koreanName,
       nx,
       ny,
       ...items,
@@ -142,6 +224,7 @@ async function fetchWeatherData(type, location) {
     throw error;
   }
 }
+
 async function processLocationData() {
   try {
     const locationData = await mergeLocationsData();
@@ -151,10 +234,11 @@ async function processLocationData() {
     // Use Promise.all to await all asynchronous operations concurrently
     await Promise.all(
       locationData.map(async (location) => {
-        const currentItems = await fetchWeatherData("currentData", location);
+        const currentItems = await fetchWeatherData("client", location);
         const pastItems = await fetchWeatherData("pastData", location);
         const { hour } = currentItems;
         const fcstTime = formatPlusOneHour(hour);
+
         const PTY = currentItems.item.find(
           (item) => item.category === "PTY" && item.fcstTime === fcstTime
         );
@@ -173,4 +257,8 @@ async function processLocationData() {
 //TODO server-side와 client-side 분리하기
 //mongodb 와 연결하는 파일 따로 만들기.
 
-processLocationData().then((data) => console.log(data));
+// processLocationData().then((data) => console.log(data));
+// fetchWeatherData("DB", "pastData", locations).then((data) => console.log(data));
+locations.forEach((location) => {
+  console.log(getLocationObj("DB", location));
+});
