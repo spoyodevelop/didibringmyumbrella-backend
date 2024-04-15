@@ -11,71 +11,126 @@ const {
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
 
 const locations = [
-  { administrativeArea: "Seoul", nx: 60, ny: 127, koreanName: "서울" },
-  { administrativeArea: "Busan", nx: 98, ny: 76, koreanName: "부산" },
-  { administrativeArea: "Daegu", nx: 89, ny: 90, koreanName: "대구" },
-  { administrativeArea: "Incheon", nx: 55, ny: 124, koreanName: "인천" },
-  { administrativeArea: "Gwangju", nx: 58, ny: 74, koreanName: "광주" },
-  { administrativeArea: "Daejeon", nx: 67, ny: 100, koreanName: "대전" },
-  { administrativeArea: "Ulsan", nx: 102, ny: 84, koreanName: "울산" },
-  { administrativeArea: "Sejong-si", nx: 66, ny: 103, koreanName: "세종" },
-  { administrativeArea: "Gyeonggi-do", nx: 60, ny: 120, koreanName: "경기도" },
-  { administrativeArea: "Gangwon-do", nx: 73, ny: 134, koreanName: "강원도" },
+  {
+    administrativeArea: "Seoul",
+    capitalNX: 60,
+    capitalNY: 127,
+    koreanName: "서울",
+  },
+  {
+    administrativeArea: "Busan",
+    capitalNX: 98,
+    capitalNY: 76,
+    koreanName: "부산",
+  },
+  {
+    administrativeArea: "Daegu",
+    capitalNX: 89,
+    capitalNY: 90,
+    koreanName: "대구",
+  },
+  {
+    administrativeArea: "Incheon",
+    capitalNX: 55,
+    capitalNY: 124,
+    koreanName: "인천",
+  },
+  {
+    administrativeArea: "Gwangju",
+    capitalNX: 58,
+    capitalNY: 74,
+    koreanName: "광주",
+  },
+  {
+    administrativeArea: "Daejeon",
+    capitalNX: 67,
+    capitalNY: 100,
+    koreanName: "대전",
+  },
+  {
+    administrativeArea: "Ulsan",
+    capitalNX: 102,
+    capitalNY: 84,
+    koreanName: "울산",
+  },
+  {
+    administrativeArea: "Sejong-si",
+    capitalNX: 66,
+    capitalNY: 103,
+    koreanName: "세종",
+  },
+  {
+    administrativeArea: "Gyeonggi-do",
+    capitalNX: 60,
+    capitalNY: 120,
+    koreanName: "경기도",
+  },
+  {
+    administrativeArea: "Gangwon-do",
+    capitalNX: 73,
+    capitalNY: 134,
+    koreanName: "강원도",
+  },
   {
     administrativeArea: "Chungcheongbuk-do",
-    nx: 69,
-    ny: 107,
+    capitalNX: 69,
+    capitalNY: 107,
     koreanName: "충청북도",
   },
   {
     administrativeArea: "Chungcheongnam-do",
-    nx: 68,
-    ny: 100,
+    capitalNX: 68,
+    capitalNY: 100,
     koreanName: "충청남도",
   },
   {
     administrativeArea: "Jeollabuk-do",
-    nx: 63,
-    ny: 89,
+    capitalNX: 63,
+    capitalNY: 89,
     koreanName: "전라북도",
   },
   {
     administrativeArea: "Jeollanam-do",
-    nx: 51,
-    ny: 67,
+    capitalNX: 51,
+    capitalNY: 67,
     koreanName: "전라남도",
   },
   {
     administrativeArea: "Gyeongsangbuk-do",
-    nx: 89,
-    ny: 91,
+    capitalNX: 89,
+    capitalNY: 91,
     koreanName: "경상북도",
   },
   {
     administrativeArea: "Gyeongsangnam-do",
-    nx: 91,
-    ny: 77,
+    capitalNX: 91,
+    capitalNY: 77,
     koreanName: "경상남도",
   },
-  { administrativeArea: "Jeju-do", nx: 52, ny: 38, koreanName: "제주" },
+  {
+    administrativeArea: "Jeju-do",
+    capitalNX: 52,
+    capitalNY: 38,
+    koreanName: "제주",
+  },
 ];
-async function mergeLocationsData() {
-  try {
-    const locationsData = await fetchLocationsData();
-
-    const result = locationsData.map((location) => {
-      const matchedPlace = locations.filter(
-        (l) => l.administrativeArea === location.administrativeArea
-      );
-      const matchedLocation = matchedPlace.length > 0 ? matchedPlace[0] : {};
-      return { ...matchedLocation, ...location };
-    });
-
-    return result;
-  } catch (error) {
-    console.error("Error in mergeLocationsData:", error);
-    throw error;
-  }
+async function mergeLocationsData(locationData) {
+  const matchedPlace = locations.filter(
+    (location) =>
+      location.administrativeArea === locationData.administrativeArea
+  );
+  const matchedLocation = matchedPlace.length > 0 ? matchedPlace[0] : {};
+  // console.log(matchedLocation);
+  // console.log(locationData);
+  const { capitalNX, capitalNY, koreanName, administrativeArea } =
+    matchedLocation;
+  return {
+    capitalNX,
+    capitalNY,
+    koreanName,
+    administrativeArea,
+    ...locationData,
+  };
 }
 
 function dummyDataGen() {
@@ -106,55 +161,83 @@ function dummyDataGen() {
   // 결과 출력
   return timeArray;
 }
-function getTimeObj(timeType) {
+function getTimeObj(dataType) {
   let year, month, day, hour, minute;
 
-  if (timeType === "currentData") {
+  if (dataType === "currentData") {
     ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
-  } else if (timeType === "pastData") {
+  } else if (dataType === "pastData") {
     ({ year, month, day, hour, minute } = getCurrentBaseDate());
   }
-  return { timeType, year, month, day, hour, minute };
+  return { dataType, year, month, day, hour, minute };
 }
 function getLocationObj(usage, location) {
-  let nx, ny, administrativeArea, convertedX, convertedY, koreanName;
+  let capitalNX,
+    capitalNY,
+    administrativeArea,
+    convertedX,
+    convertedY,
+    koreanName,
+    place;
+
   if (usage === "client") {
-    ({ nx, ny, administrativeArea, convertedX, convertedY, koreanName } =
-      location);
-    (nx = convertedX), (ny = convertedY);
+    ({
+      administrativeArea,
+      koreanName,
+      place,
+      formattedAddress,
+      convertedX,
+      convertedY,
+      capitalNX,
+      capitalNY,
+    } = location);
+    return {
+      usage,
+      administrativeArea,
+      koreanName,
+      place,
+      formattedAddress,
+      convertedX,
+      convertedY,
+      capitalNX,
+      capitalNY,
+    };
   }
   if (usage === "DB") {
-    ({ nx, ny, administrativeArea, koreanName } = location);
+    ({ capitalNX, capitalNY, administrativeArea, koreanName } = location);
+    console.log(location);
+    return {
+      usage,
+      capitalNX,
+      capitalNY,
+      administrativeArea,
+      koreanName,
+    };
   }
-  return {
-    usage,
-    nx,
-    ny,
-    administrativeArea,
-    convertedX: convertedX ? convertedX : nx,
-    convertedY: convertedY ? convertedY : ny,
-    koreanName,
-  };
 }
 function getUrlAndMergedObject(locationObj, timeObj) {
   let url;
-  const {
-    usage,
-    ny,
-    nx,
-    administrativeArea,
-    convertedX: convertedXValue,
-    convertedY: convertedYValue,
-    koreanName,
-  } = locationObj;
+  const { usage, administrativeArea, koreanName } = locationObj;
+  let capitalNX, capitalNY, convertedX, convertedY;
 
-  const convertedX = "convertedX" in locationObj ? convertedXValue : undefined;
-  const convertedY = "convertedY" in locationObj ? convertedYValue : undefined;
-  const { timeType, year, month, day, hour, minute } = timeObj;
-  if (timeType === "pastData") {
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
+  if (usage === "client") {
+    ({ convertedX, convertedY, capitalNX, capitalNY, place, formattedAddress } =
+      locationObj);
+  } else if (usage === "DB") {
+    ({ capitalNX, capitalNY } = locationObj);
+  }
+  // console.log(locationObj);
+
+  const { dataType, year, month, day, hour, minute } = timeObj;
+
+  if (dataType === "pastData") {
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
+      convertedX ? convertedX : capitalNX
+    }&ny=${convertedY ? convertedY : capitalNY}`;
   } else {
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
+      convertedX ? convertedX : capitalNX
+    }&ny=${convertedY ? convertedY : capitalNY}`;
   }
 
   return {
@@ -165,33 +248,24 @@ function getUrlAndMergedObject(locationObj, timeObj) {
     day,
     hour,
     minute,
-    nx,
-    ny,
+    capitalNX,
+    capitalNY,
     administrativeArea,
     koreanName,
-    convertedX: convertedX ? convertedX : undefined,
-    convertedY: convertedY ? convertedY : undefined,
+    place: usage === "DB" ? koreanName : place,
+    formattedAddress: usage === "DB" ? koreanName : place,
+    convertedX: usage === "DB" ? capitalNX : convertedX,
+    convertedY: usage === "DB" ? capitalNY : convertedY,
   };
 }
-async function fetchWeatherData(usage, timeType, location) {
+
+async function fetchWeatherData(usage, dataType, location) {
   const locationObj = getLocationObj(usage, location);
-  const timeObj = getTimeObj(timeType);
+  console.log(locationObj);
+  const timeObj = getTimeObj(dataType);
   const urlAndMergedObj = getUrlAndMergedObject(locationObj, timeObj);
-  const {
-    url,
-    year,
-    month,
-    day,
-    hour,
-    minute,
-    nx,
-    ny,
-    administrativeArea,
-    koreanName,
-    convertedX,
-    convertedY,
-  } = urlAndMergedObj;
-  console.log(url);
+  // console.log(urlAndMergedObj);
+  const { url } = urlAndMergedObj;
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -206,17 +280,8 @@ async function fetchWeatherData(usage, timeType, location) {
     }
     const items = jObj.response.body.items;
     return {
-      convertedX,
-      convertedY,
-      year,
-      month,
-      day,
-      hour,
-      minute,
-      administrativeArea,
-      koreanName,
-      nx,
-      ny,
+      dataType,
+      urlAndMergedObj,
       ...items,
     };
   } catch (error) {
@@ -257,8 +322,36 @@ async function processLocationData() {
 //TODO server-side와 client-side 분리하기
 //mongodb 와 연결하는 파일 따로 만들기.
 
-// processLocationData().then((data) => console.log(data));
-// fetchWeatherData("DB", "pastData", locations).then((data) => console.log(data));
-locations.forEach((location) => {
-  console.log(getLocationObj("DB", location));
+fetchLocationsData().then((locations) => {
+  locations.forEach((location) => {
+    mergeLocationsData(location).then((mergedLocation) => {
+      fetchWeatherData("client", "pastData", mergedLocation).then((data) =>
+        console.log(data)
+      );
+      fetchWeatherData("client", "currentData", mergedLocation).then((data) =>
+        console.log(data)
+      );
+      fetchWeatherData("DB", "pastData", mergedLocation).then((data) =>
+        console.log(data)
+      );
+      fetchWeatherData("DB", "currentData", mergedLocation).then((data) =>
+        console.log(data)
+      );
+    });
+  });
 });
+// fetchLocationsData().then((locations) => {
+//   locations.forEach((location) => {
+//     console.log(location);
+//     mergeLocationsData(location).then((mergedLocation) =>
+//       console.log(mergedLocation)
+//     );
+//   });
+// });
+
+// fetchLocationsData().then((locations) =>
+//   locations.forEach((location) => {
+//     console.log(location);
+//     console.log(getLocationObj("client", location));
+//   })
+// );

@@ -1,22 +1,22 @@
 const { dfs_xy_conv } = require("./positionFormatting");
 const { GOOGLE_API_KEY } = require("./majorKeys");
 const DUMMY_LOCATION = [
-  {
-    place: "남산타워",
-    latitude: 37.5515,
-    longitude: 126.988,
-  },
+  // {
+  //   place: "남산타워",
+  //   latitude: 37.5515,
+  //   longitude: 126.988,
+  // },
   {
     place: "해운대해수욕장",
     latitude: 35.1585,
     longitude: 129.1603,
   },
-  {
-    place: "동성로",
-    latitude: 35.8692,
-    longitude: 128.6014,
-  },
   // {
+  //   place: "동성로",
+  //   latitude: 35.8692,
+  //   longitude: 128.6014,
+  // },
+  // // {
   //   place: "인천 차이나타운",
   //   latitude: 37.4765,
   //   longitude: 126.6235,
