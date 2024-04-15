@@ -1,21 +1,21 @@
 const { dfs_xy_conv } = require("./positionFormatting");
 const { GOOGLE_API_KEY } = require("./majorKeys");
 const DUMMY_LOCATION = [
-  // {
-  //   place: "남산타워",
-  //   latitude: 37.5515,
-  //   longitude: 126.988,
-  // },
-  // {
-  //   place: "해운대해수욕장",
-  //   latitude: 35.1585,
-  //   longitude: 129.1603,
-  // },
-  // {
-  //   place: "동성로",
-  //   latitude: 35.8692,
-  //   longitude: 128.6014,
-  // },
+  {
+    place: "남산타워",
+    latitude: 37.5515,
+    longitude: 126.988,
+  },
+  {
+    place: "해운대해수욕장",
+    latitude: 35.1585,
+    longitude: 129.1603,
+  },
+  {
+    place: "동성로",
+    latitude: 35.8692,
+    longitude: 128.6014,
+  },
   // {
   //   place: "인천 차이나타운",
   //   latitude: 37.4765,
@@ -56,11 +56,11 @@ const DUMMY_LOCATION = [
   //   latitude: 36.6421,
   //   longitude: 127.4885,
   // },
-  {
-    place: "대천 해수욕장",
-    latitude: 36.3299,
-    longitude: 126.4122,
-  },
+  // {
+  //   place: "대천 해수욕장",
+  //   latitude: 36.3299,
+  //   longitude: 126.4122,
+  // },
   // // {
   // //   place: "전주 한옥마을",
   // //   latitude: 35.8142,

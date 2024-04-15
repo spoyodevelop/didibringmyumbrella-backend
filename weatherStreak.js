@@ -5,7 +5,7 @@ const { XMLParser } = require("fast-xml-parser");
 const { fetchLocationsData } = require("./locationToAdministraiveArea");
 const {
   getPastFormattedHour,
-  getCurrentBaseTime,
+  getCurrentBaseDate,
   formatPlusOneHour,
 } = require("./dateFormatting");
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
@@ -106,13 +106,16 @@ async function fetchWeatherData(type, location) {
     ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
     url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
   } else if (type === "pastData") {
-    ({ year, month, day, hour, minute } = getCurrentBaseTime());
+    ({ year, month, day, hour, minute } = getCurrentBaseDate());
     url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${nx}&ny=${ny}`;
   }
 
   // console.log(url);
   try {
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
     const xmlData = await response.text();
     const parser = new XMLParser();
     let jObj = parser.parse(xmlData);
@@ -167,5 +170,7 @@ async function processLocationData() {
     throw error;
   }
 }
+//TODO server-side와 client-side 분리하기
+//mongodb 와 연결하는 파일 따로 만들기.
 
 processLocationData().then((data) => console.log(data));

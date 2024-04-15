@@ -40,8 +40,25 @@ function getPastFormattedHour(hourAgo, type) {
   const dateObj = convertDate(pastDate, type);
   return dateObj;
 }
+function getClosestPastBaseTime(baseTimes, hour) {
+  let closestTime = baseTimes[0];
+  let minDifference = Math.abs(hour - baseTimes[0]);
+  baseTimes.forEach((time) => {
+    //이분탐색까지 쓸일이야... 없겠지?
+    const difference = Math.abs(hour - time);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestTime = time;
+    }
+  });
+  let baseTimeIndex = baseTimes.indexOf(closestTime) - 1;
+  if (baseTimeIndex < 0) {
+    baseTimeIndex = baseTimes.length - 1;
+  }
+  return baseTimes[baseTimeIndex];
+}
 
-function getCurrentBaseTime() {
+function getCurrentBaseDate() {
   const baseTimes = [2, 5, 8, 11, 14, 17, 20, 23];
   const options = {
     hourCycle: "h23",
@@ -53,22 +70,11 @@ function getCurrentBaseTime() {
   };
   const currentDate = new Date();
   const currentHour = currentDate.getHours();
-  let closestTime = baseTimes[0];
-  let minDifference = Math.abs(currentHour - baseTimes[0]);
-  baseTimes.forEach((time) => {
-    const difference = Math.abs(currentHour - time);
-    if (difference < minDifference) {
-      minDifference = difference;
-      closestTime = time;
-    }
-  });
+
   let pastDate = new Date(currentDate.getTime());
-  let baseTimeIndex = baseTimes.indexOf(closestTime) - 1;
-  if (baseTimeIndex < 0) {
-    baseTimeIndex = baseTimes.length - 1;
-    pastDate.setDate(pastDate.getDate() - 1);
-  }
-  const correctedTime = baseTimes[baseTimeIndex];
+
+  pastDate.setDate(pastDate.getDate() - 1);
+  const correctedTime = getClosestPastBaseTime(baseTimes, currentHour);
 
   pastDate.setHours(correctedTime);
   pastDate.setMinutes(0);
@@ -139,6 +145,6 @@ function formatPlusOneHour(hour) {
 
 module.exports = {
   getPastFormattedHour,
-  getCurrentBaseTime,
+  getCurrentBaseDate,
   formatPlusOneHour,
 };
