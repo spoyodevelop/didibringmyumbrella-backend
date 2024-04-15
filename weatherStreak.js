@@ -30,10 +30,8 @@ async function mergeLocationsData(capitalLocationData, locationData) {
 }
 
 function dummyDataGen() {
-  // 배열을 담을 변수를 선언합니다.
   const timeArray = [];
 
-  // 시작 시간과 종료 시간을 정의합니다.
   const startTime = new Date();
   startTime.setHours(22, 0, 0); // 22:00:00
 
@@ -111,14 +109,13 @@ function getLocationObj(usage, location) {
     };
   }
 }
-function getUrlAndMergedObject(locationObj, timeObj) {
+function getUrl(locationObj, timeObj) {
   let url;
-  const { usage, administrativeArea, koreanName } = locationObj;
+  const { usage } = locationObj;
   let capitalNX, capitalNY, convertedX, convertedY;
 
   if (usage === "client") {
-    ({ convertedX, convertedY, capitalNX, capitalNY, place, formattedAddress } =
-      locationObj);
+    ({ convertedX, convertedY, place, formattedAddress } = locationObj);
   } else if (usage === "DB") {
     ({ capitalNX, capitalNY } = locationObj);
   }
@@ -135,32 +132,15 @@ function getUrlAndMergedObject(locationObj, timeObj) {
     }&ny=${convertedY ? convertedY : capitalNY}`;
   }
 
-  return {
-    usage,
-    url,
-    year,
-    month,
-    day,
-    hour,
-    minute,
-    capitalNX,
-    capitalNY,
-    administrativeArea,
-    koreanName,
-    place: usage === "DB" ? koreanName : place,
-    formattedAddress: usage === "DB" ? koreanName : place,
-    convertedX: usage === "DB" ? capitalNX : convertedX,
-    convertedY: usage === "DB" ? capitalNY : convertedY,
-  };
+  return url;
 }
 
 async function fetchWeatherData(usage, dataType, location) {
   const locationObj = getLocationObj(usage, location);
 
   const timeObj = getTimeObj(dataType);
-  const urlAndMergedObj = getUrlAndMergedObject(locationObj, timeObj);
+  const url = getUrl(locationObj, timeObj);
 
-  const { url } = urlAndMergedObj;
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -177,7 +157,9 @@ async function fetchWeatherData(usage, dataType, location) {
     return {
       dataType,
       usage,
-      ...urlAndMergedObj,
+      url,
+      locationObj,
+      timeObj,
       ...items,
     };
   } catch (error) {
