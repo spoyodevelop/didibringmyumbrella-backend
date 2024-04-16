@@ -162,7 +162,7 @@ async function fetchWeatherData(usage, dataType, location) {
     };
   } catch (error) {
     console.error("Error fetching data weatherData:", error);
-    throw error;
+    //add retry function
   }
 }
 

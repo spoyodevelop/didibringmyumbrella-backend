@@ -1,0 +1,21 @@
+{
+  "name": "weather-accuracy-statistics",
+  "version": "1.0.0",
+  "description": "Making stats about Probability of precipitation from korea metrorological api",
+  "main": "dateFormatting.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rain",
+    "weather",
+    "Probability",
+    "of",
+    "precipitation"
+  ],
+  "author": "spoy",
+  "license": "ISC",
+  "dependencies": {
+    "fast-xml-parser": "^4.3.6"
+  }
+}
