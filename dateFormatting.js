@@ -73,7 +73,7 @@ function getCurrentBaseDate() {
 
   let pastDate = new Date(currentDate.getTime());
 
-  pastDate.setDate(pastDate.getDate() - 1);
+  pastDate.setDate(pastDate.getDate());
   const correctedTime = getClosestPastBaseTime(baseTimes, currentHour);
 
   pastDate.setHours(correctedTime);

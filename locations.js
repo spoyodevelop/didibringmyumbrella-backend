@@ -1,9 +1,9 @@
-const DUMMY_LOCATION = [
-  // {
-  //   place: "남산타워",
-  //   latitude: 37.5515,
-  //   longitude: 126.988,
-  // },
+const DUMMY_POSITION = [
+  {
+    place: "남산타워",
+    latitude: 37.5515,
+    longitude: 126.988,
+  },
   {
     place: "해운대해수욕장",
     latitude: 35.1585,
@@ -189,7 +189,22 @@ const CAPITAL_LOCATION = [
     koreanName: "제주",
   },
 ];
+const DUMMY_CAPITAL = [
+  {
+    administrativeArea: "Seoul",
+    capitalNX: 60,
+    capitalNY: 127,
+    koreanName: "서울",
+  },
+  {
+    administrativeArea: "Busan",
+    capitalNX: 98,
+    capitalNY: 76,
+    koreanName: "부산",
+  },
+];
 module.exports = {
-  DUMMY_LOCATION,
+  DUMMY_POSITION,
   CAPITAL_LOCATION,
+  DUMMY_CAPITAL,
 };

@@ -16,6 +16,10 @@
   "author": "spoy",
   "license": "ISC",
   "dependencies": {
-    "fast-xml-parser": "^4.3.6"
+    "axios": "^1.6.8",
+    "axios-retry": "^4.1.0",
+    "fast-xml-parser": "^4.3.6",
+    "fetch-retry": "^6.0.0",
+    "isomorphic-fetch": "^3.0.0"
   }
 }
