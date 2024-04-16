@@ -1,7 +1,8 @@
 const fs = require("fs");
 const { formatPlusOneHour } = require("./dateFormatting");
-const { DUMMY_CAPITAL } = require("./locations");
+const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations");
 const { fetchWeatherData } = require("./fetchWeather");
+const { basename } = require("path");
 
 async function processLocationData(CAPITALS) {
   try {
@@ -12,13 +13,42 @@ async function processLocationData(CAPITALS) {
           "currentData",
           capital
         );
-        const pastData = await fetchWeatherData("DB", "pastData", capital);
-        const { hour, koreanName } = currentData;
-        const fcstTime = formatPlusOneHour(hour);
-        const PTY = currentData.item.find((item) => item.category === "PTY");
-        const POP = pastData.item.find((item) => item.category === "POP");
 
-        return { capital, koreanName, currentData, pastData, PTY, POP };
+        const pastData = await fetchWeatherData("DB", "pastData", capital);
+
+        const { hour } = currentData;
+        const fcstTime = formatPlusOneHour(hour);
+        //this code stinks!
+        function filterAndMapItems(data, category) {
+          return data.item
+            .filter((item) => item.category === category)
+            .reduce((acc, item) => {
+              const {
+                baseDate,
+                baseTime,
+                category,
+                fcstDate,
+                fcstTime,
+                fcstValue,
+                nx,
+                ny,
+              } = item;
+              acc[item.category + item.fcstTime] = {
+                baseDate,
+                baseTime,
+                category,
+                fcstDate,
+                fcstTime,
+                fcstValue,
+                nx,
+                ny,
+              };
+              return acc;
+            }, {});
+        }
+        const PTY = filterAndMapItems(currentData, "PTY");
+        const POP = filterAndMapItems(pastData, "POP");
+        return { capital, ...PTY, ...POP };
       } catch (error) {
         console.error("Error processing data for capital", capital, error);
         return { capital, error };
@@ -57,6 +87,6 @@ async function writeDataToFile(data) {
   }
 }
 
-processLocationData(DUMMY_CAPITAL)
+processLocationData(CAPITAL_LOCATION)
   .then((data) => console.log("Data processed:", data))
   .catch((error) => console.error("Error in processing location data", error));

@@ -7,9 +7,9 @@ function getTimeObj(dataType) {
   let year, month, day, hour, minute;
 
   if (dataType === "currentData") {
-    ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
+    ({ year, month, day, hour, minute } = getPastFormattedHour(3, true));
   } else if (dataType === "pastData") {
-    ({ year, month, day, hour, minute } = getCurrentBaseDate());
+    ({ year, month, day, hour, minute } = getCurrentBaseDate(new Date()));
   }
   return { dataType, year, month, day, hour, minute };
 }

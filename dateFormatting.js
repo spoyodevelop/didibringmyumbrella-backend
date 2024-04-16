@@ -43,8 +43,8 @@ function getPastFormattedHour(hourAgo, type) {
 function getClosestPastBaseTime(baseTimes, hour) {
   let closestTime = baseTimes[0];
   let minDifference = Math.abs(hour - baseTimes[0]);
+  let daySubtract = 0;
   baseTimes.forEach((time) => {
-    //이분탐색까지 쓸일이야... 없겠지?
     const difference = Math.abs(hour - time);
     if (difference < minDifference) {
       minDifference = difference;
@@ -52,13 +52,15 @@ function getClosestPastBaseTime(baseTimes, hour) {
     }
   });
   let baseTimeIndex = baseTimes.indexOf(closestTime) - 1;
+
   if (baseTimeIndex < 0) {
     baseTimeIndex = baseTimes.length - 1;
+    daySubtract = 1;
   }
-  return baseTimes[baseTimeIndex];
+  return { closestTime: baseTimes[baseTimeIndex], daySubtract: daySubtract };
 }
 
-function getCurrentBaseDate() {
+function getCurrentBaseDate(date) {
   const baseTimes = [2, 5, 8, 11, 14, 17, 20, 23];
   const options = {
     hourCycle: "h23",
@@ -68,15 +70,18 @@ function getCurrentBaseDate() {
     hour: "2-digit",
     minute: "2-digit",
   };
-  const currentDate = new Date();
+  const currentDate = date;
   const currentHour = currentDate.getHours();
 
   let pastDate = new Date(currentDate.getTime());
 
   pastDate.setDate(pastDate.getDate());
-  const correctedTime = getClosestPastBaseTime(baseTimes, currentHour);
-
-  pastDate.setHours(correctedTime);
+  const { closestTime, daySubtract } = getClosestPastBaseTime(
+    baseTimes,
+    currentHour
+  );
+  pastDate.setDate(pastDate.getDate() - daySubtract);
+  pastDate.setHours(closestTime);
   pastDate.setMinutes(0);
   const formattedPastDate = pastDate.toLocaleDateString("ko-KR", options);
   const dateObj = convertDate(formattedPastDate, false);
@@ -91,57 +96,15 @@ function formatPlusOneHour(hour) {
   const result = hourInt + "00";
   return +result;
 }
-// function runTests() {
-//   const options = {
-//     hourCycle: "h23",
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//   };
-//   // Test case 1: Current time is exactly one of the base times
-//   console.log("Test case 1:");
-//   console.log("Current time is exactly one of the base times:");
-//   // Set the current time to be one of the base times
-//   const testDate1 = new Date("2024-04-14T08:00:00"); // April 14, 2024 08:00:00
-//   console.log("Testing Date:", testDate1.toLocaleDateString("ko-KR", options));
-//   getCurrentBaseTime(testDate1);
 
-//   // Test case 2: Current time is between two base times
-//   console.log("\nTest case 2:");
-//   console.log("Current time is between two base times:");
-//   // Set the current time to be between two base times
-//   const testDate2 = new Date("2024-04-14T09:30:00"); // April 14, 2024 09:30:00
-//   console.log("Testing Date:", testDate2.toLocaleDateString("ko-KR", options));
-//   getCurrentBaseTime(testDate2);
-
-//   // Test case 3: Current time is before the first base time
-//   console.log("\nTest case 3:");
-//   console.log("Current time is before the first base time:");
-//   // Set the current time to be before the first base time
-//   const testDate3 = new Date("2024-04-14T01:00:00"); // April 14, 2024 01:00:00
-//   console.log("Testing Date:", testDate3.toLocaleDateString("ko-KR", options));
-//   getCurrentBaseTime(testDate3);
-
-//   // Test case 4: Current time is after the last base time
-//   console.log("\nTest case 4:");
-//   console.log("Current time is after the last base time:");
-//   // Set the current time to be after the last base time
-//   const testDate4 = new Date("2024-04-15T02:00:00"); // April 15, 2024 02:00:00
-//   console.log("Testing Date:", testDate4.toLocaleDateString("ko-KR", options));
-//   getCurrentBaseTime(testDate4);
-
-//   // Test case 5: Current time is close to midnight
-//   console.log("\nTest case 5:");
-//   console.log("Current time is close to midnight:");
-//   // Set the current time to be close to midnight
-//   const testDate5 = new Date("2024-04-14T23:30:00"); // April 14, 2024 23:30:00
-//   console.log("Testing Date:", testDate5.toLocaleDateString("ko-KR", options));
-//   getCurrentBaseTime(testDate5);
-// }
-
-// runTests();
+const options = {
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+};
 
 module.exports = {
   getPastFormattedHour,
