@@ -65,57 +65,57 @@ function getTimeObj(dataType) {
   }
   return { dataType, year, month, day, hour, minute };
 }
-function getLocationObj(usage, location) {
-  let capitalNX,
-    capitalNY,
-    administrativeArea,
-    convertedX,
-    convertedY,
-    koreanName,
-    place;
+// function getLocationObj(usage, location) {
+//   let capitalNX,
+//     capitalNY,
+//     administrativeArea,
+//     convertedX,
+//     convertedY,
+//     koreanName,
+//     place;
 
-  if (usage === "client") {
-    ({
-      administrativeArea,
-      koreanName,
-      place,
-      formattedAddress,
-      convertedX,
-      convertedY,
-      capitalNX,
-      capitalNY,
-    } = location);
-    return {
-      usage,
-      administrativeArea,
-      koreanName,
-      place,
-      formattedAddress,
-      convertedX,
-      convertedY,
-      capitalNX,
-      capitalNY,
-    };
-  }
-  if (usage === "DB") {
-    ({ capitalNX, capitalNY, administrativeArea, koreanName } = location);
+//   if (usage === "client") {
+//     ({
+//       administrativeArea,
+//       koreanName,
+//       place,
+//       formattedAddress,
+//       convertedX,
+//       convertedY,
+//       capitalNX,
+//       capitalNY,
+//     } = location);
+//     return {
+//       usage,
+//       administrativeArea,
+//       koreanName,
+//       place,
+//       formattedAddress,
+//       convertedX,
+//       convertedY,
+//       capitalNX,
+//       capitalNY,
+//     };
+//   }
+//   if (usage === "DB") {
+//     ({ capitalNX, capitalNY, administrativeArea, koreanName } = location);
 
-    return {
-      usage,
-      capitalNX,
-      capitalNY,
-      administrativeArea,
-      koreanName,
-    };
-  }
-}
-function getUrl(locationObj, timeObj) {
+//     return {
+//       usage,
+//       capitalNX,
+//       capitalNY,
+//       administrativeArea,
+//       koreanName,
+//     };
+//   }
+// }
+function getUrl(usage, locationObj, timeObj) {
   let url;
-  const { usage } = locationObj;
+
   let capitalNX, capitalNY, convertedX, convertedY;
 
   if (usage === "client") {
-    ({ convertedX, convertedY, place, formattedAddress } = locationObj);
+    ({ convertedX, convertedY } = locationObj);
   } else if (usage === "DB") {
     ({ capitalNX, capitalNY } = locationObj);
   }
@@ -123,11 +123,11 @@ function getUrl(locationObj, timeObj) {
   const { dataType, year, month, day, hour, minute } = timeObj;
 
   if (dataType === "pastData") {
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
       convertedX ? convertedX : capitalNX
     }&ny=${convertedY ? convertedY : capitalNY}`;
   } else {
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
       convertedX ? convertedX : capitalNX
     }&ny=${convertedY ? convertedY : capitalNY}`;
   }
@@ -136,10 +136,8 @@ function getUrl(locationObj, timeObj) {
 }
 
 async function fetchWeatherData(usage, dataType, location) {
-  const locationObj = getLocationObj(usage, location);
-
   const timeObj = getTimeObj(dataType);
-  const url = getUrl(locationObj, timeObj);
+  const url = getUrl(usage, location, timeObj);
 
   try {
     const response = await fetch(url);
@@ -158,7 +156,7 @@ async function fetchWeatherData(usage, dataType, location) {
       dataType,
       usage,
       url,
-      locationObj,
+      location,
       timeObj,
       ...items,
     };
@@ -203,18 +201,18 @@ async function processLocationData() {
 fetchLocationsData().then((locations) => {
   locations.forEach((location) => {
     mergeLocationsData(CAPITAL_LOCATION, location).then((mergedLocation) => {
-      fetchWeatherData("client", "pastData", mergedLocation).then((data) =>
-        console.log(data)
-      );
+      // fetchWeatherData("client", "pastData", mergedLocation).then((data) =>
+      //   console.log(data)
+      // );
       fetchWeatherData("client", "currentData", mergedLocation).then((data) =>
         console.log(data)
       );
-      fetchWeatherData("DB", "pastData", mergedLocation).then((data) =>
-        console.log(data)
-      );
-      fetchWeatherData("DB", "currentData", mergedLocation).then((data) =>
-        console.log(data)
-      );
+      // fetchWeatherData("DB", "pastData", mergedLocation).then((data) =>
+      //   console.log(data)
+      // );
+      // fetchWeatherData("DB", "currentData", mergedLocation).then((data) =>
+      //   console.log(data)
+      // );
     });
   });
 });
