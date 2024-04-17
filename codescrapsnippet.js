@@ -49,32 +49,90 @@ async function processLocationData() {
     throw error;
   }
 }
+//Cursed testCases
 function dateTestCases() {
-  // Test case 1: Normal case
-  // console.log(getCurrentBaseDate()); // Should output the current or closest past base time
-  // Test case 2: Edge case - Midnight
-  // const midnightDate = new Date();
-  // midnightDate.setHours(0, 0, 0, 0);
-  // console.log(midnightDate.toLocaleDateString("ko-KR", options));
-  // console.log(getCurrentBaseDate(midnightDate)); // Should output the closest past base time
-  // //Test case 3: Edge case - Near Midnight
-  // const nearMidnightDate = new Date();
-  // nearMidnightDate.setHours(23, 45, 0, 0); // 11:45 PM
-  // console.log(nearMidnightDate.toLocaleDateString("ko-KR", options));
-  // console.log(getCurrentBaseDate(nearMidnightDate)); // Should output the closest past base time
-  // // Test case 4: Edge case - Early Morning
-  // const earlyMorningDate = new Date();
-  // earlyMorningDate.setHours(1, 0, 0, 0); // 1:00 AM
-  // console.log(earlyMorningDate.toLocaleDateString("ko-KR", options));
-  // console.log(getCurrentBaseDate(earlyMorningDate)); // Should output the closest past base time from the previous day
-  // // Test case 5: Edge case - Late Night
-  // const lateNightDate = new Date();
-  // lateNightDate.setHours(23, 0, 0, 0); // 11:00 PM
-  // console.log(lateNightDate.toLocaleDateString("ko-KR", options));
-  // console.log(getCurrentBaseDate(lateNightDate)); // Should output the closest past base time from the current day
-  // // Test case 6: Edge case - Day Transition
-  // const dayTransitionDate = new Date();
-  // dayTransitionDate.setHours(3, 0, 0, 0); // 3:00 AM
-  // console.log(dayTransitionDate.toLocaleDateString("ko-KR", options));
-  // console.log(getCurrentBaseDate(dayTransitionDate)); // Should output the closest past base time from the previous day
+  const options = {
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+  //Test case 2: Edge case - Midnight
+  const midnightDate = new Date();
+  midnightDate.setHours(2, 15, 0, 0);
+  console.log(midnightDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(midnightDate, baseTimes, "DB")); // Should output the closest past base time
+  //Test case 3: Edge case - Near Midnight
+  const nearMidnightDate = new Date();
+  nearMidnightDate.setHours(5, 15, 0, 0); // 11:45 PM
+  console.log(nearMidnightDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(nearMidnightDate, baseTimes, "DB")); // Should output the closest past base time
+  // Test case 4: Edge case - Early Morning
+  const earlyMorningDate = new Date();
+  earlyMorningDate.setHours(8, 15, 0, 0); // 1:00 AM
+  console.log(earlyMorningDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(earlyMorningDate, baseTimes, "DB")); // Should output the closest past base time from the previous day
+  // Test case 5: Edge case - Late Night
+  const afternoonDate = new Date();
+  afternoonDate.setHours(11, 15, 0, 0); // 11:00 PM
+  console.log(afternoonDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(afternoonDate, baseTimes, "DB")); // Should output the closest past base time from the current day
+  // Test case 6: Edge case - Day Transition
+  const fourTeenDate = new Date();
+  fourTeenDate.setHours(14, 15, 0, 0); // 3:00 AM
+  console.log(fourTeenDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(fourTeenDate, baseTimes, "DB")); // Should output the closest past base time from the previous day
+  const dinnerDate = new Date();
+  dinnerDate.setHours(17, 15, 0, 0); // 11:00 PM
+  console.log(dinnerDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(dinnerDate, baseTimes, "DB")); // Should output the closest past base time from the current day
+  // Test case 6: Edge case - Day Transition
+  const pastDinnerDate = new Date();
+  pastDinnerDate.setHours(20, 15, 0, 0); // 3:00 AM
+  console.log(pastDinnerDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(pastDinnerDate, baseTimes, "DB")); // Should output the closest past base time from the previous day
+
+  const dayTransitionDate = new Date();
+  dayTransitionDate.setHours(23, 15, 0, 0); // 3:00 AM
+  console.log(dayTransitionDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(dayTransitionDate, baseTimes, "DB")); // Should output the closest past base time from the previous day
+}
+function pastDateTestCases() {
+  const options = {
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+  //Test case 2: Edge case - Midnight
+  const midnightDate = new Date();
+  midnightDate.setHours(0, 0, 0, 0);
+  console.log(midnightDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(midnightDate, baseTimes, "client")); // Should output the closest past base time
+  //Test case 3: Edge case - Near Midnight
+  const nearMidnightDate = new Date();
+  nearMidnightDate.setHours(23, 45, 0, 0); // 11:45 PM
+  console.log(nearMidnightDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(nearMidnightDate, baseTimes, "client")); // Should output the closest past base time
+  // Test case 4: Edge case - Early Morning
+  const earlyMorningDate = new Date();
+  earlyMorningDate.setHours(1, 0, 0, 0); // 1:00 AM
+  console.log(earlyMorningDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(earlyMorningDate, baseTimes, "client")); // Should output the closest past base time from the previous day
+  // Test case 5: Edge case - Late Night
+  const lateNightDate = new Date();
+  lateNightDate.setHours(23, 0, 0, 0); // 11:00 PM
+  console.log(lateNightDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(lateNightDate, baseTimes, "client")); // Should output the closest past base time from the current day
+  // Test case 6: Edge case - Day Transition
+  const dayTransitionDate = new Date();
+  dayTransitionDate.setHours(3, 0, 0, 0); // 3:00 AM
+  console.log(dayTransitionDate.toLocaleDateString("ko-KR", options));
+  console.log(getCurrentBaseDate(dayTransitionDate, baseTimes, "client")); // Should output the closest past base time from the previous day
 }

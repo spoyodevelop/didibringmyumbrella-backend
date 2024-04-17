@@ -1,21 +1,28 @@
 const {
   getPastFormattedHour,
   getCurrentBaseDate,
+  baseTimes,
 } = require("./dateFormatting");
+const { DUMMY_CAPITAL } = require("./locations");
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
-function getTimeObj(dataType) {
+function getTimeObj(usage, dataType) {
   let year, month, day, hour, minute;
 
   if (dataType === "currentData") {
-    ({ year, month, day, hour, minute } = getPastFormattedHour(3, true));
+    ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
   } else if (dataType === "pastData") {
-    ({ year, month, day, hour, minute } = getCurrentBaseDate(new Date()));
+    ({ year, month, day, hour, minute } = getCurrentBaseDate(
+      new Date(),
+      baseTimes,
+      usage
+    ));
   }
-  return { dataType, year, month, day, hour, minute };
+  return { usage, dataType, year, month, day, hour, minute };
 }
 
-function getUrl(usage, locationObj, timeObj) {
+function getUrl(locationObj, timeObj) {
   let url;
+  const { usage } = timeObj;
 
   let capitalNX, capitalNY, convertedX, convertedY;
 
@@ -39,6 +46,7 @@ function getUrl(usage, locationObj, timeObj) {
 
   return url;
 }
+
 module.exports = {
   getTimeObj,
   getUrl,
