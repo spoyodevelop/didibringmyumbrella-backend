@@ -64,7 +64,11 @@ async function processWeatherData(CAPITALS) {
         console.log(message);
         return { date: newDate, message, capital, ...PTY, ...POP };
       } catch (error) {
-        console.error("Error processing data for capital", capital, error);
+        console.error(
+          "Error fetching weather data for capital",
+          capital,
+          error
+        );
         return { capital, error };
       }
     });
