@@ -7,7 +7,7 @@ const { processWeatherData } = require("./processWeatherDataAndSave.js");
 
 console.log("starting job....");
 const job = schedule.scheduleJob(
-  "15 3,6,9,12,15,18,21,0 * * *",
+  "45 3,6,9,12,15,18,21,0 * * *",
   async function () {
     try {
       console.log();

@@ -46,6 +46,10 @@ function getUrl(locationObj, timeObj) {
 
   return url;
 }
+// DUMMY_CAPITAL.forEach((capital) => {
+//   const time = getTimeObj("DB", "currentData");
+//   console.log(getUrl(capital, time));
+// });
 
 module.exports = {
   getTimeObj,
