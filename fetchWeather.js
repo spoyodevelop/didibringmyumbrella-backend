@@ -11,6 +11,15 @@ async function fetchWeatherDataWithRetry(usage, dataType, location, delay) {
 
   for (let tries = 1; tries <= maxTries; tries++) {
     try {
+      if (tries === 1) {
+        console.log(`fetching Weather Data... this is first try....`);
+      } else {
+        console.log(
+          `fetching weather data... this is ${tries} tries and ${
+            maxTries - tries
+          } tries remaining`
+        );
+      }
       const weatherData = await fetchWeatherData(usage, dataType, location);
 
       return weatherData;
