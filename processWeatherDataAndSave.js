@@ -45,7 +45,8 @@ async function processWeatherData(CAPITALS) {
                 nx,
                 ny,
               } = item;
-              acc[item.category + item.fcstTime] = {
+
+              acc[item.category + item.baseTime] = {
                 baseDate,
                 baseTime,
                 category,
@@ -58,11 +59,12 @@ async function processWeatherData(CAPITALS) {
               return acc;
             }, {});
         }
+        const RN1 = filterAndMapItems(currentData, "RN1");
         const PTY = filterAndMapItems(currentData, "PTY");
         const POP = filterAndMapItems(pastData, "POP");
         const message = `${capital.koreanName} 의 데이터를 ${convertedDate}에 가져왔습니다.`;
         console.log(message);
-        return { date: newDate, message, capital, ...PTY, ...POP };
+        return { date: newDate, message, capital, ...PTY, ...POP, ...RN1 };
       } catch (error) {
         console.error(
           "Error fetching weather data for capital",

@@ -5,17 +5,17 @@ const {
 } = require("./dateFormatting");
 const { DUMMY_CAPITAL } = require("./locations");
 const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
+
+//TODO 가능한 버그 => 0, 1, 2, 3분일때, 데이터베이스에 데이터가 없을수가 있다.
+//이전데이터를 불러오거나, 인터벌을 땡기자.
+
 function getTimeObj(usage, dataType) {
   let year, month, day, hour, minute;
 
   if (dataType === "currentData") {
-    ({ year, month, day, hour, minute } = getPastFormattedHour(1, true));
+    ({ year, month, day, hour, minute } = getPastFormattedHour(0, false));
   } else if (dataType === "pastData") {
-    ({ year, month, day, hour, minute } = getCurrentBaseDate(
-      new Date(),
-      baseTimes,
-      usage
-    ));
+    ({ year, month, day, hour, minute } = getCurrentBaseDate(new Date()));
   }
   return { usage, dataType, year, month, day, hour, minute };
 }
@@ -39,7 +39,7 @@ function getUrl(locationObj, timeObj) {
       convertedX ? convertedX : capitalNX
     }&ny=${convertedY ? convertedY : capitalNY}`;
   } else {
-    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
+    url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
       convertedX ? convertedX : capitalNX
     }&ny=${convertedY ? convertedY : capitalNY}`;
   }

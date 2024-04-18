@@ -95,7 +95,6 @@ async function fetchWeatherData(usage, dataType, location) {
 //   fetchWeatherDataWithRetry("DB", "currentData", capital, 1000).then((data) =>
 //     console.log(data)
 //   );
-//   // fetchWeatherData("DB", "pastData", capital).then((data) => console.log(data));
 // });
 
 //TODO server-side와 client-side 분리하기

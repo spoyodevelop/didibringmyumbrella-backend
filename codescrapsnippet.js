@@ -136,3 +136,79 @@ function pastDateTestCases() {
   console.log(dayTransitionDate.toLocaleDateString("ko-KR", options));
   console.log(getCurrentBaseDate(dayTransitionDate, baseTimes, "client")); // Should output the closest past base time from the previous day
 }
+function getClosestBaseTime(baseTimes, hour, minusHour) {
+  let closestTime = baseTimes[0];
+  let adjustedHour = hour - minusHour;
+  let minDifference = Math.abs(adjustedHour - baseTimes[0]);
+  let daySubtract = 0;
+  baseTimes.forEach((time) => {
+    const difference = Math.abs(adjustedHour - time);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestTime = time;
+    }
+  });
+  let baseTimeIndex = baseTimes.indexOf(closestTime);
+
+  if (baseTimeIndex < 0) {
+    baseTimeIndex = baseTimes.length - 1;
+    daySubtract = 1;
+  }
+  return { closestTime: baseTimes[baseTimeIndex], daySubtract: daySubtract };
+}
+const baseTimes = [2, 5, 8, 11, 14, 17, 20, 23];
+
+// Function to convert time from "HH:MM" format to minutes
+function timeToMinutes(time) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+// Function to determine the base time for a given time range
+function determineBaseTime(startTime, endTime, baseTimes) {
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+
+  // Finding the base time based on the time range
+  for (let i = 0; i < baseTimes.length; i++) {
+    const baseTime = baseTimes[i];
+    if (
+      startMinutes <= baseTime * 60 + 14 &&
+      endMinutes >= baseTime * 60 + 15
+    ) {
+      return baseTime;
+    }
+  }
+
+  return null; // If no matching base time found
+}
+
+// Define your time ranges
+const timeRanges = [
+  { startTime: "23:15", endTime: "02:14", baseTime: 23 },
+  { startTime: "02:15", endTime: "05:14", baseTime: 2 },
+  { startTime: "05:15", endTime: "08:14", baseTime: 5 },
+  { startTime: "08:15", endTime: "11:14", baseTime: 8 },
+  { startTime: "11:15", endTime: "14:14", baseTime: 11 },
+  { startTime: "14:15", endTime: "17:14", baseTime: 14 },
+  { startTime: "17:15", endTime: "20:14", baseTime: 17 },
+  { startTime: "20:15", endTime: "23:14", baseTime: 20 },
+];
+
+// Generate the array of objects with base time for each time range
+const result = timeRanges.map((range) => {
+  const { startTime, endTime } = range;
+  const baseTime = determineBaseTime(startTime, endTime, baseTimes);
+  return { startTime, endTime, baseTime };
+});
+
+console.log("Array result:");
+console.log(result);
+
+console.log("\nIndividual objects:");
+// Print the array
+result.forEach((obj) => {
+  console.log(
+    `{ startTime: ${obj.startTime}, endTime: ${obj.endTime}, baseTime: ${obj.baseTime} }`
+  );
+});
