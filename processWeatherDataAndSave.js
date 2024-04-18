@@ -42,6 +42,7 @@ async function processWeatherData(CAPITALS) {
                 fcstDate,
                 fcstTime,
                 fcstValue,
+                obsrValue,
                 nx,
                 ny,
               } = item;
@@ -53,6 +54,7 @@ async function processWeatherData(CAPITALS) {
                 fcstDate,
                 fcstTime,
                 fcstValue,
+                obsrValue,
                 nx,
                 ny,
               };
