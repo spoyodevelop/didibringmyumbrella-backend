@@ -13,7 +13,7 @@ function getTimeObj(usage, dataType) {
   let year, month, day, hour, minute;
 
   if (dataType === "currentData") {
-    ({ year, month, day, hour, minute } = getPastFormattedHour(1, false));
+    ({ year, month, day, hour, minute } = getPastFormattedHour(0, false));
   } else if (dataType === "pastData") {
     ({ year, month, day, hour, minute } = getCurrentBaseDate(new Date()));
   }
