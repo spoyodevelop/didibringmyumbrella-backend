@@ -44,7 +44,7 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
           return data.item
             .filter((item) => item.category === category)
             .reduce((acc, item) => {
-              acc[item.category + item.baseTime] = { ...item };
+              acc[item.category] = { ...item };
               return acc;
             }, {});
         };
@@ -54,11 +54,17 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
         const POP = filterAndMapItems(pastData, "POP");
 
         const message = `${koreanName}의 데이터를 ${convertedDate}에 가져왔습니다.`;
-        console.log(message);
 
+        const mergedObj = {
+          baseDate,
+          POP: POP.POP.fcstValue,
+          PTY: PTY.PTY.obsrValue,
+          RN1: RN1.RN1.obsrValue,
+          didItRain: PTY.PTY.obsrValue > 0,
+        };
         return {
           date: newDate,
-          baseDate,
+          mergedObj,
           message,
           capital,
           administrativeArea,
@@ -100,6 +106,7 @@ async function writeDataToFile(data, destination, fileName) {
     throw error;
   }
 }
+
 async function processDataAndWriteToFile(capital, fetchingMinutes) {
   try {
     const processedData = await processWeatherData(capital, fetchingMinutes);
@@ -115,7 +122,5 @@ async function processDataAndWriteToFile(capital, fetchingMinutes) {
     console.error("Error processing weather data:", error);
   }
 }
-
-// Call the async function
 
 module.exports = { processDataAndWriteToFile };
