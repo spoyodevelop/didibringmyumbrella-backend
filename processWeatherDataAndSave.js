@@ -6,82 +6,77 @@ const {
 } = require("./dateFormatting.js");
 const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations.js");
 const { fetchWeatherDataWithRetry } = require("./fetchWeather.js");
+const { weatherData } = require("./data/data.js");
 
-async function processWeatherData(CAPITALS) {
+async function processWeatherData(CAPITALS, fetchingMinute) {
   try {
     const dataPromises = CAPITALS.map(async (capital) => {
       try {
-        console.log(`fetchingData`);
+        const { administrativeArea, koreanName } = capital;
+        console.log(`${koreanName}의 데이터를 가져옵니다....`);
+
         const currentData = await fetchWeatherDataWithRetry(
           "DB",
           "currentData",
           capital,
           2000
         );
-
         const pastData = await fetchWeatherDataWithRetry(
           "DB",
           "pastData",
           capital,
           2000
         );
-        const newDate = new Date();
-        const convertedDate = JSDateToConvertedDate(newDate);
-        const { hour } = currentData;
-        const fcstTime = formatPlusOneHour(hour);
 
-        //this code stinks!
-        function filterAndMapItems(data, category) {
+        const newDate = new Date();
+        function createBaseDate(fetchingMinute) {
+          const date = new Date();
+          date.setMinutes(fetchingMinute);
+          date.setSeconds(0);
+          date.setMilliseconds(0);
+          return date;
+        }
+
+        const convertedDate = JSDateToConvertedDate(newDate);
+        const baseDate = createBaseDate(fetchingMinute);
+
+        const filterAndMapItems = (data, category) => {
           return data.item
             .filter((item) => item.category === category)
             .reduce((acc, item) => {
-              const {
-                baseDate,
-                baseTime,
-                category,
-                fcstDate,
-                fcstTime,
-                fcstValue,
-                obsrValue,
-                nx,
-                ny,
-              } = item;
-
-              acc[item.category + item.baseTime] = {
-                baseDate,
-                baseTime,
-                category,
-                fcstDate,
-                fcstTime,
-                fcstValue,
-                obsrValue,
-                nx,
-                ny,
-              };
+              acc[item.category + item.baseTime] = { ...item };
               return acc;
             }, {});
-        }
+        };
+
         const RN1 = filterAndMapItems(currentData, "RN1");
         const PTY = filterAndMapItems(currentData, "PTY");
         const POP = filterAndMapItems(pastData, "POP");
-        const message = `${capital.koreanName} 의 데이터를 ${convertedDate}에 가져왔습니다.`;
+
+        const message = `${koreanName}의 데이터를 ${convertedDate}에 가져왔습니다.`;
         console.log(message);
-        return { date: newDate, message, capital, ...PTY, ...POP, ...RN1 };
+
+        return {
+          date: newDate,
+          baseDate,
+          message,
+          capital,
+          administrativeArea,
+          ...PTY,
+          ...POP,
+          ...RN1,
+        };
       } catch (error) {
         console.error(
           "Error fetching weather data for capital",
           capital,
           error
         );
-        return { capital, error };
+        throw error;
       }
     });
 
     const processedData = await Promise.all(dataPromises);
-
-    // Write data to file
-    await writeDataToFile(processedData);
-
     return processedData;
   } catch (error) {
     console.error("Error processing location data", error);
@@ -89,16 +84,13 @@ async function processWeatherData(CAPITALS) {
   }
 }
 
-async function writeDataToFile(data) {
+async function writeDataToFile(data, destination, fileName) {
   try {
-    // Read existing data from file
-    const existingData = require("./data/data.js");
-    // Push new data into existing array
-    existingData.weatherData.push(...data);
+    const existingData = require(`./data/${destination}/${fileName}.js`);
+    existingData.weatherData.push(data);
 
-    // Write updated data back to file
     fs.writeFileSync(
-      "./data/data.js",
+      `./data/${destination}/${fileName}.js`,
       `module.exports = ${JSON.stringify(existingData)};`
     );
 
@@ -108,5 +100,22 @@ async function writeDataToFile(data) {
     throw error;
   }
 }
+async function processDataAndWriteToFile(capital, fetchingMinutes) {
+  try {
+    const processedData = await processWeatherData(capital, fetchingMinutes);
 
-module.exports = { processWeatherData };
+    const promises = processedData.map((data) =>
+      writeDataToFile(data, data.administrativeArea, "weatherData")
+    );
+
+    await Promise.all(promises);
+
+    console.log("All data has been written to files successfully.");
+  } catch (error) {
+    console.error("Error processing weather data:", error);
+  }
+}
+
+// Call the async function
+
+module.exports = { processDataAndWriteToFile };
