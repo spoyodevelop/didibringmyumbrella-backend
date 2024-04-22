@@ -54,7 +54,6 @@ async function getAllMergedObjAndSaveFile(capitals) {
     writeDataFile(POPObjects, dest, "POPstats");
   });
 }
-getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
 
 // Call the function with capital locations
 module.exports = {
