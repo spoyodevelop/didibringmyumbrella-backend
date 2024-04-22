@@ -6,7 +6,7 @@ const {
 } = require("./dateFormatting.js");
 const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations.js");
 const { fetchWeatherDataWithRetry } = require("./fetchWeather.js");
-const { weatherData } = require("./data/data.js");
+// const { weatherData } = require("./data/data.js");
 
 async function processWeatherData(CAPITALS, fetchingMinute) {
   try {
