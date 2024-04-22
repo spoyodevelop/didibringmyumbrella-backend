@@ -4,7 +4,9 @@ const {
   baseTimes,
 } = require("./dateFormatting");
 const { DUMMY_CAPITAL } = require("./locations");
-const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
+require('dotenv').config();
+const KOREA_METEOROLOGICAL_API_KEY = process.env.KOREA_METEOROLOGICAL_API_KEY;
+// const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
 
 //TODO 가능한 버그 => 0, 1, 2, 3분일때, 데이터베이스에 데이터가 없을수가 있다.
 //이전데이터를 불러오거나, 인터벌을 땡기자.

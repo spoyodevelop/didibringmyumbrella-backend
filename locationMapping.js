@@ -1,8 +1,10 @@
 const { dfs_xy_conv } = require("./positionFormatting");
-const { GOOGLE_API_KEY } = require("./majorKeys");
+// const { GOOGLE_API_KEY } = require("./majorKeys");
 const { DUMMY_POSITION, CAPITAL_LOCATION } = require("./locations");
 const axios = require("axios");
 const axiosRetry = require("axios-retry").default;
+require('dotenv').config();
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
 async function positionToLocation(location) {
   try {
