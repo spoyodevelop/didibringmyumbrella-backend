@@ -1,12 +1,14 @@
 const nodemailer = require("nodemailer");
-const { emailPassword } = require("./majorKeys");
+// const { emailPassword } = require("./majorKeys");
+require("dotenv").config();
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 
 // Gmail SMTP 설정
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
     user: "kjy9505@gmail.com",
-    pass: emailPassword,
+    pass: EMAIL_PASSWORD,
   },
 });
 
