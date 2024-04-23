@@ -56,29 +56,38 @@ const weatherSchema = new mongoose.Schema({
 const Weather = mongoose.model("Weather", weatherSchema);
 
 async function getWeatherDataInsertToDB(capitals) {
+  let connection; // Declare connection variable outside the try-catch block
   try {
+    // Connect to MongoDB before the loop
+    const url = `mongodb+srv://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@weathercluster.wnaoze9.mongodb.net/POPdata`;
+    connection = await mongoose.connect(url, {});
+
     for (const capital of capitals) {
       const dest = capital.administrativeArea;
-      const url = `mongodb+srv://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@weathercluster.wnaoze9.mongodb.net/${dest}`;
-
-      await mongoose.connect(url, {});
 
       console.log("Connected to MongoDB for", dest);
 
       const weatherData = require(`./data/${dest}/POPstats.js`);
-      await uploadWeatherData(weatherData, dest);
-
-      mongoose.disconnect();
+      const uploadingData =
+        weatherData.POPstats[weatherData.POPstats.length - 1];
+      await uploadWeatherData(uploadingData, dest); // Pass dest to uploadWeatherData
       console.log("Disconnected from MongoDB for", dest);
     }
+
+    // Disconnect from MongoDB after all operations are complete
+    await mongoose.disconnect();
   } catch (error) {
     console.error("Error:", error);
+    if (connection) {
+      // If an error occurs, close the connection
+      await mongoose.disconnect();
+    }
   }
 }
 
 async function uploadWeatherData(data, dest) {
   try {
-    const weatherData = new Weather({
+    const weatherData = {
       lastUpdatedSince: data.lastUpdatedSince,
       administrativeArea: dest,
       // Dynamically fill data for POPs from POP0 to POP100
@@ -92,9 +101,13 @@ async function uploadWeatherData(data, dest) {
           },
         };
       }).reduce((acc, obj) => ({ ...acc, ...obj }), {}),
+    };
+
+    // Directly replace existing document or insert if not found
+    await Weather.findOneAndReplace({ administrativeArea: dest }, weatherData, {
+      upsert: true,
     });
 
-    await weatherData.save();
     console.log(`Weather data for ${dest} saved to MongoDB`);
   } catch (error) {
     console.error(`Error saving weather data for ${dest}:`, error);

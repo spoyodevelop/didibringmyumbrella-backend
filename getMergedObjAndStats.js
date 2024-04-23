@@ -16,8 +16,13 @@ const writeDataFile = (data, destination, fileName) => {
   };
   //add a updated date to data
   const filePath = `./data/${destination}/${fileName}.js`;
-  // Simply overwrite existing data
-  fs.writeFileSync(filePath, `module.exports = ${JSON.stringify(newData)};`);
+  const existingData = require(filePath);
+  existingData.POPstats.push(newData);
+
+  fs.writeFileSync(
+    filePath,
+    `module.exports = ${JSON.stringify(existingData)};`
+  );
   console.log(`Data successfully saved to ${filePath}`);
 };
 
