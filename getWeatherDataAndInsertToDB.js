@@ -96,7 +96,6 @@ async function getWeatherDataInsertToDB(capitals) {
 
 async function uploadWeatherData(data, dest) {
   try {
-    console.log(data);
     const weatherData = {
       lastUpdatedSince: data.lastUpdatedSince,
       administrativeArea: dest,
