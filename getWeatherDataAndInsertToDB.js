@@ -3,7 +3,8 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
-
+//I can make this schema programmatically of course, but it is wise
+//to make ANY schemas explicit as possible for building safety net.
 const weatherSchema = new mongoose.Schema({
   administrativeArea: { type: String, required: true },
   lastUpdatedSince: { type: Date, required: true },
