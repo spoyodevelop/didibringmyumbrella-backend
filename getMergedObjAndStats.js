@@ -5,9 +5,22 @@ const { CAPITAL_LOCATION } = require("./locations");
 const writeDataFile = (data, destination, fileName) => {
   const lastUpdatedSince = new Date();
 
+  let totalArrayCount = 0;
+  let totalDidItRainCount = 0;
+
+  data.forEach((item) => {
+    Object.keys(item).forEach((key) => {
+      // Add arrayLength and didItRainLength to totals
+      totalArrayCount += item[key].arrayLength;
+      totalDidItRainCount += item[key].didItRainLength;
+    });
+  });
+
   const newData = {
     lastUpdatedSince: lastUpdatedSince,
     administrativeArea: destination,
+    totalArrayCount,
+    totalDidItRainCount,
     ...Object.values(data).reduce((acc, val) => {
       const key = Object.keys(val)[0];
       acc[key] = val[key];

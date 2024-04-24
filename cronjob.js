@@ -8,6 +8,7 @@ const { getAllMergedObjAndSaveFile } = require("./getMergedObjAndStats.js");
 const {
   getWeatherDataInsertToDB,
 } = require("./getWeatherDataAndInsertToDB.js");
+const { writeTotalPOPDataToFile } = require("./getTotalPOPdata.js");
 console.log("starting job....");
 const minute = 15;
 const job = schedule.scheduleJob(
@@ -16,6 +17,11 @@ const job = schedule.scheduleJob(
     try {
       await processDataAndWriteToFile(CAPITAL_LOCATION, minute);
       await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
+      await writeTotalPOPDataToFile(
+        "totalOfAllArea",
+        "POPstats",
+        CAPITAL_LOCATION
+      );
       await getWeatherDataInsertToDB(CAPITAL_LOCATION);
     } catch (error) {
       console.error("Error processing weather data:", error);

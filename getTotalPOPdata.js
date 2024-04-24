@@ -1,7 +1,8 @@
+const fs = require("fs");
+const { CAPITAL_LOCATION } = require("./locations");
+
 function getAllPOPs(capitals) {
-  const date = new Date();
   const totalPOPStats = {
-    lastUpdatedSince: date,
     administrativeArea: "totalOfAllArea",
     totalArrayCount: 0,
     totalDidItRainCount: 0,
@@ -31,15 +32,34 @@ function getAllPOPs(capitals) {
         continue;
       }
       const { arrayLength, didItRainLength } = POPstats[`POP${i}`];
-      totalPOPStats[`totalPOP${i}`].arrayLength += arrayLength;
-      totalPOPStats[`totalPOP${i}`].didItRainCount += didItRainLength;
+      totalPOPStats[`POP${i}`].arrayLength += arrayLength;
+      totalPOPStats[`POP${i}`].didItRainCount += didItRainLength;
       totalPOPStats.totalArrayCount += arrayLength;
       totalPOPStats.totalDidItRainCount += didItRainLength;
     }
   }
   return totalPOPStats;
 }
+const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
+  const lastUpdatedSince = new Date();
+  const totalPOPStats = getAllPOPs(capital);
+  const newData = {
+    lastUpdatedSince: lastUpdatedSince,
+    ...totalPOPStats,
+  };
+  //add a updated date to data
+  const filePath = `./data/${destination}/${fileName}.js`;
+  const existingData = require(filePath);
+
+  existingData.POPstats.push(newData);
+
+  fs.writeFileSync(
+    filePath,
+    `module.exports = ${JSON.stringify(existingData)};`
+  );
+  console.log(`Data successfully saved to ${filePath}`);
+};
 
 module.exports = {
-  getAllPOPs,
+  writeTotalPOPDataToFile,
 };

@@ -1,5 +1,5 @@
 const { getAllPOPs } = require("./getTotalPOPdata");
-const { DUMMY_CAPITAL } = require("./locations");
+const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
@@ -77,8 +77,12 @@ async function getWeatherDataInsertToDB(capitals) {
       await uploadWeatherData(uploadingData, dest); // Pass dest to uploadWeatherData
       console.log("Disconnected from MongoDB for", dest);
     }
-    const totalObject = getAllPOPs(capitals);
-    await uploadWeatherData(totalObject, totalObject.administrativeArea);
+    const totalData = require("./data/totalOfAllArea/POPstats.js");
+    const uploadingTotalData =
+      totalData.POPstats[totalData.POPstats.length - 1];
+
+    await uploadWeatherData(uploadingTotalData, "totalOfAllArea"); // Pass dest to uploadWeatherData
+    console.log("Disconnected from MongoDB for", "totalOfAllArea");
     // Disconnect from MongoDB after all operations are complete
     await mongoose.disconnect();
   } catch (error) {
@@ -92,18 +96,12 @@ async function getWeatherDataInsertToDB(capitals) {
 
 async function uploadWeatherData(data, dest) {
   try {
-    let totalArrayCount = 0;
-    let totalDidItRainCount = 0;
-    for (let i = 0; i <= 100; i += 10) {
-      const popKey = `POP${i}`;
-      totalArrayCount += data[popKey].arrayLength || 0;
-      totalDidItRainCount += data[popKey].didItRainLength || 0;
-    }
+    console.log(data);
     const weatherData = {
       lastUpdatedSince: data.lastUpdatedSince,
       administrativeArea: dest,
-      totalArrayCount,
-      totalDidItRainCount,
+      totalArrayCount: data.totalArrayCount,
+      totalDidItRainCount: data.totalDidItRainCount,
       ...Array.from({ length: 11 }, (_, i) => {
         const popValue = i * 10;
         const popKey = `POP${popValue}`;
