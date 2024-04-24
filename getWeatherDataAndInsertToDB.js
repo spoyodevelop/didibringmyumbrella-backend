@@ -1,3 +1,4 @@
+const { getAllPOPs } = require("./getTotalPOPdata");
 const { DUMMY_CAPITAL } = require("./locations");
 require("dotenv").config();
 const mongoose = require("mongoose");
@@ -8,6 +9,8 @@ const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
 const weatherSchema = new mongoose.Schema({
   administrativeArea: { type: String, required: true },
   lastUpdatedSince: { type: Date, required: true },
+  totalArrayCount: { type: Number, required: true },
+  totalDidItRainCount: { type: Number, required: true },
   POP0: {
     arrayLength: { type: Number, required: true },
     didItRainCount: { type: Number, required: true },
@@ -74,7 +77,8 @@ async function getWeatherDataInsertToDB(capitals) {
       await uploadWeatherData(uploadingData, dest); // Pass dest to uploadWeatherData
       console.log("Disconnected from MongoDB for", dest);
     }
-
+    const totalObject = getAllPOPs(capitals);
+    await uploadWeatherData(totalObject, totalObject.administrativeArea);
     // Disconnect from MongoDB after all operations are complete
     await mongoose.disconnect();
   } catch (error) {
@@ -88,10 +92,18 @@ async function getWeatherDataInsertToDB(capitals) {
 
 async function uploadWeatherData(data, dest) {
   try {
+    let totalArrayCount = 0;
+    let totalDidItRainCount = 0;
+    for (let i = 0; i <= 100; i += 10) {
+      const popKey = `POP${i}`;
+      totalArrayCount += data[popKey].arrayLength || 0;
+      totalDidItRainCount += data[popKey].didItRainLength || 0;
+    }
     const weatherData = {
       lastUpdatedSince: data.lastUpdatedSince,
       administrativeArea: dest,
-      // Dynamically fill data for POPs from POP0 to POP100
+      totalArrayCount,
+      totalDidItRainCount,
       ...Array.from({ length: 11 }, (_, i) => {
         const popValue = i * 10;
         const popKey = `POP${popValue}`;
@@ -117,4 +129,5 @@ async function uploadWeatherData(data, dest) {
 
 module.exports = {
   getWeatherDataInsertToDB,
+  uploadWeatherData,
 };
