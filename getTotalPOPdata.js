@@ -6,17 +6,17 @@ function getAllPOPs(capitals) {
     administrativeArea: "totalOfAllArea",
     totalArrayCount: 0,
     totalDidItRainCount: 0,
-    POP0: { arrayLength: 0, didItRainCount: 0 },
-    POP10: { arrayLength: 0, didItRainCount: 0 },
-    POP20: { arrayLength: 0, didItRainCount: 0 },
-    POP30: { arrayLength: 0, didItRainCount: 0 },
-    POP40: { arrayLength: 0, didItRainCount: 0 },
-    POP50: { arrayLength: 0, didItRainCount: 0 },
-    POP60: { arrayLength: 0, didItRainCount: 0 },
-    POP70: { arrayLength: 0, didItRainCount: 0 },
-    POP80: { arrayLength: 0, didItRainCount: 0 },
-    POP90: { arrayLength: 0, didItRainCount: 0 },
-    POP100: { arrayLength: 0, didItRainCount: 0 },
+    POP0: { arrayLength: 0, didItRainLength: 0 },
+    POP10: { arrayLength: 0, didItRainLength: 0 },
+    POP20: { arrayLength: 0, didItRainLength: 0 },
+    POP30: { arrayLength: 0, didItRainLength: 0 },
+    POP40: { arrayLength: 0, didItRainLength: 0 },
+    POP50: { arrayLength: 0, didItRainLength: 0 },
+    POP60: { arrayLength: 0, didItRainLength: 0 },
+    POP70: { arrayLength: 0, didItRainLength: 0 },
+    POP80: { arrayLength: 0, didItRainLength: 0 },
+    POP90: { arrayLength: 0, didItRainLength: 0 },
+    POP100: { arrayLength: 0, didItRainLength: 0 },
   };
 
   for (const capital of capitals) {
@@ -33,7 +33,7 @@ function getAllPOPs(capitals) {
       }
       const { arrayLength, didItRainLength } = POPstats[`POP${i}`];
       totalPOPStats[`POP${i}`].arrayLength += arrayLength;
-      totalPOPStats[`POP${i}`].didItRainCount += didItRainLength;
+      totalPOPStats[`POP${i}`].didItRainLength += didItRainLength;
       totalPOPStats.totalArrayCount += arrayLength;
       totalPOPStats.totalDidItRainCount += didItRainLength;
     }
