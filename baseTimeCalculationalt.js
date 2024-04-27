@@ -48,11 +48,11 @@ function getBaseTimeForGivenTime(givenDate) {
         millisecond: 0,
       });
 
-      return currentDate;
+      return currentDate.toDate();
     }
   }
   currentDate.set({ hour: 23, minute: 0, second: 0, millisecond: 0 });
-  return currentDate;
+  return currentDate.toDate();
 }
 
 // const newDate = new Date();
