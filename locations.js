@@ -9,85 +9,92 @@ const DUMMY_POSITION = [
     latitude: 35.1585,
     longitude: 129.1603,
   },
-  // {
-  //   place: "동성로",
-  //   latitude: 35.8692,
-  //   longitude: 128.6014,
-  // },
-  // // {
-  //   place: "인천 차이나타운",
-  //   latitude: 37.4765,
-  //   longitude: 126.6235,
-  // },
-  // {
-  //   place: "광주 518 기념공원",
-  //   latitude: 35.1469,
-  //   longitude: 126.8754,
-  // },
-  // {
-  //   place: "대전 엑스포 공원",
-  //   latitude: 36.3622,
-  //   longitude: 127.3832,
-  // },
-  // {
-  //   place: "울산 대왕암공원",
-  //   latitude: 35.5473,
-  //   longitude: 129.317,
-  // },
-  // {
-  //   place: "세종 호수공원",
-  //   latitude: 36.4879,
-  //   longitude: 127.2495,
-  // },
-  // {
-  //   place: "에버랜드",
-  //   latitude: 37.2935,
-  //   longitude: 127.202,
-  // },
-  // {
-  //   place: "남이섬",
-  //   latitude: 37.7979,
-  //   longitude: 127.6392,
-  // },
-  // {
-  //   place: "청주 청남대",
-  //   latitude: 36.6421,
-  //   longitude: 127.4885,
-  // },
-  // {
-  //   place: "대천 해수욕장",
-  //   latitude: 36.3299,
-  //   longitude: 126.4122,
-  // },
-  // // {
-  // //   place: "전주 한옥마을",
-  // //   latitude: 35.8142,
-  // //   longitude: 127.1522,
-  // // },
-  // {
-  //   place: "여수 바다목장",
-  //   latitude: 34.7569,
-  //   longitude: 127.7444,
-  // },
-  // {
-  //   place: "경주 석굴암",
-  //   latitude: 35.7935,
-  //   longitude: 129.3602,
-  // },
-  // {
-  //   place: "통영",
-  //   latitude: 34.8502,
-  //   longitude: 128.4338,
-  // },
-  // {
-  //   place: "성산일출봉",
-  //   latitude: 33.4596,
-  //   longitude: 126.9428,
-  // },
+  {
+    place: "동성로",
+    latitude: 35.8692,
+    longitude: 128.6014,
+  },
+  {
+    place: "인천 차이나타운",
+    latitude: 37.4765,
+    longitude: 126.6235,
+  },
+  {
+    place: "광주 송정역사공원",
+    latitude: 35.1567,
+    longitude: 126.8385,
+  },
+  {
+    place: "대전 엑스포 공원",
+    latitude: 36.3622,
+    longitude: 127.3832,
+  },
+  {
+    place: "울산 대왕암공원",
+    latitude: 35.5473,
+    longitude: 129.317,
+  },
+  {
+    place: "세종 호수공원",
+    latitude: 36.4879,
+    longitude: 127.2495,
+  },
+  {
+    place: "에버랜드",
+    latitude: 37.2935,
+    longitude: 127.202,
+  },
+  {
+    place: "남이섬",
+    latitude: 37.7979,
+    longitude: 127.6392,
+  },
+  {
+    place: "대청호",
+    latitude: 36.6918,
+    longitude: 127.4301,
+  },
+  {
+    place: "당진 해양자연공원",
+    latitude: 36.8683,
+    longitude: 126.6304,
+  },
+  {
+    place: "전주 한옥마을",
+    latitude: 35.8142,
+    longitude: 127.1522,
+  },
+  {
+    place: "여수 바다목장",
+    latitude: 34.7569,
+    longitude: 127.7444,
+  },
+  {
+    place: "경주 석굴암",
+    latitude: 35.7914,
+    longitude: 129.3617,
+  },
+  {
+    place: "통영 해맞이공원",
+    latitude: 34.8583,
+    longitude: 128.4263,
+  },
+  {
+    place: "성산일출봉",
+    latitude: 33.4596,
+    longitude: 126.9428,
+  },
+  {
+    place: "광주광역시청",
+    latitude: 35.1603,
+    longitude: 126.8513,
+  },
 ];
+
 const CAPITAL_LOCATION = [
   {
     administrativeArea: "Seoul",
+    administrativeAreaKorean: "서울특별시",
     capitalNX: 60,
     capitalNY: 127,
     koreanName: "서울",
@@ -95,6 +102,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Busan",
+    administrativeAreaKorean: "부산광역시",
     capitalNX: 98,
     capitalNY: 76,
     koreanName: "부산",
@@ -102,6 +110,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Daegu",
+    administrativeAreaKorean: "대구광역시",
     capitalNX: 89,
     capitalNY: 90,
     koreanName: "대구",
@@ -109,6 +118,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Incheon",
+    administrativeAreaKorean: "인천광역시",
     capitalNX: 55,
     capitalNY: 124,
     koreanName: "인천",
@@ -116,6 +126,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Gwangju",
+    administrativeAreaKorean: "광주광역시",
     capitalNX: 58,
     capitalNY: 74,
     koreanName: "광주",
@@ -123,6 +134,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Daejeon",
+    administrativeAreaKorean: "대전광역시",
     capitalNX: 67,
     capitalNY: 100,
     koreanName: "대전",
@@ -130,6 +142,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Ulsan",
+    administrativeAreaKorean: "울산광역시",
     capitalNX: 102,
     capitalNY: 84,
     koreanName: "울산",
@@ -137,6 +150,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Sejong-si",
+    administrativeAreaKorean: "세종특별자치시",
     capitalNX: 66,
     capitalNY: 103,
     koreanName: "세종",
@@ -144,6 +158,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Gyeonggi-do",
+    administrativeAreaKorean: "경기도",
     capitalNX: 60,
     capitalNY: 120,
     koreanName: "경기도",
@@ -151,6 +166,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Gangwon-do",
+    administrativeAreaKorean: "강원특별자치도",
     capitalNX: 73,
     capitalNY: 134,
     koreanName: "강원도",
@@ -158,6 +174,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Chungcheongbuk-do",
+    administrativeAreaKorean: "충청북도",
     capitalNX: 69,
     capitalNY: 107,
     koreanName: "충청북도",
@@ -165,6 +182,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Chungcheongnam-do",
+    administrativeAreaKorean: "충청남도",
     capitalNX: 68,
     capitalNY: 100,
     koreanName: "충청남도",
@@ -172,6 +190,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Jeollabuk-do",
+    administrativeAreaKorean: "전북특별자치도",
     capitalNX: 63,
     capitalNY: 89,
     koreanName: "전라북도",
@@ -179,6 +198,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Jeollanam-do",
+    administrativeAreaKorean: "전라남도",
     capitalNX: 51,
     capitalNY: 67,
     koreanName: "전라남도",
@@ -186,6 +206,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Gyeongsangbuk-do",
+    administrativeAreaKorean: "경상북도",
     capitalNX: 89,
     capitalNY: 91,
     koreanName: "경상북도",
@@ -193,6 +214,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Gyeongsangnam-do",
+    administrativeAreaKorean: "경상남도",
     capitalNX: 91,
     capitalNY: 77,
     koreanName: "경상남도",
@@ -200,6 +222,7 @@ const CAPITAL_LOCATION = [
   },
   {
     administrativeArea: "Jeju-do",
+    administrativeAreaKorean: "제주특별자치도",
     capitalNX: 52,
     capitalNY: 38,
     koreanName: "제주",
