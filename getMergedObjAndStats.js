@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { CAPITAL_LOCATION } = require("./locations");
+// const { CAPITAL_LOCATION } = require("./locations");
 
 // Function to write data to a file
 const writeDataFile = (data, destination, fileName) => {
@@ -44,10 +44,17 @@ async function getAllMergedObjAndSaveFile(capitals) {
     const dest = capital.administrativeArea;
     const fileName = "weatherData";
     const weatherData = require(`./data/${dest}/${fileName}.js`);
-
+    //todo: adjust data that should be round-to-nearest-even after 2 weeks or so.
     const saveByPOP = (data, popValue) => {
+      function rounding(number) {
+        if (number % 10 < 5) {
+          return Math.floor(number / 10) * 10;
+        } else {
+          return Math.ceil(number / 10) * 10;
+        }
+      }
       return data
-        .filter((item) => item.mergedObj.POP === popValue)
+        .filter((item) => rounding(item.mergedObj.POP) === popValue)
         .map((item) => item.mergedObj);
     };
 
