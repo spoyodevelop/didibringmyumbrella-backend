@@ -30,6 +30,8 @@ const writeDataFile = (data, destination, fileName) => {
   //add a updated date to data
   const filePath = `./data/${destination}/${fileName}.js`;
   const existingData = require(filePath);
+  // Remove the first element of the array and push the new data
+  existingData.POPstats.shift();
   existingData.POPstats.push(newData);
 
   fs.writeFileSync(

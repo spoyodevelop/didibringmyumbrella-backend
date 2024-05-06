@@ -1,5 +1,4 @@
 const fs = require("fs");
-const { CAPITAL_LOCATION } = require("./locations");
 
 function getAllPOPs(capitals) {
   const totalPOPStats = {
@@ -50,7 +49,8 @@ const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
   //add a updated date to data
   const filePath = `./data/${destination}/${fileName}.js`;
   const existingData = require(filePath);
-
+  // Remove the first element of the array and push the new data
+  existingData.POPstats.shift();
   existingData.POPstats.push(newData);
 
   fs.writeFileSync(
