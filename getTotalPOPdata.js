@@ -1,3 +1,4 @@
+const { CAPITAL_LOCATION } = require("./locations");
 const fs = require("fs");
 
 function getAllPOPs(capitals) {
@@ -16,6 +17,7 @@ function getAllPOPs(capitals) {
     POP80: { arrayLength: 0, didItRainLength: 0 },
     POP90: { arrayLength: 0, didItRainLength: 0 },
     POP100: { arrayLength: 0, didItRainLength: 0 },
+    rainOutOfBlue: [],
   };
 
   for (const capital of capitals) {
@@ -24,19 +26,30 @@ function getAllPOPs(capitals) {
 
     const POPstats = weatherData.POPstats[weatherData.POPstats.length - 1];
 
+    POPstats.rainOutOfBlue.forEach((item) => {
+      totalPOPStats.rainOutOfBlue.push({ administrativeArea: dest, ...item });
+    });
     for (let i = 0; i <= 100; i += 10) {
       //This SHOULDN'T HAPPEN
       if (typeof POPstats !== "object" || POPstats === null) {
         console.log("POPstats is not defined or is not an object.");
         continue;
       }
+
       const { arrayLength, didItRainLength } = POPstats[`POP${i}`];
+
       totalPOPStats[`POP${i}`].arrayLength += arrayLength;
       totalPOPStats[`POP${i}`].didItRainLength += didItRainLength;
       totalPOPStats.totalArrayCount += arrayLength;
       totalPOPStats.totalDidItRainCount += didItRainLength;
     }
   }
+
+  totalPOPStats.rainOutOfBlue.sort((a, b) => {
+    return new Date(a.baseDate) - new Date(b.baseDate);
+  });
+  //why totalPOPStats.rainOutOfBlue is empty?
+
   return totalPOPStats;
 }
 const writeTotalPOPDataToFile = async (destination, fileName, capital) => {

@@ -4,8 +4,10 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
+
 //I can make this schema programmatically of course, but it is wise
 //to make ANY schemas explicit as possible for building safety net.
+
 const weatherSchema = new mongoose.Schema({
   administrativeArea: { type: String, required: true },
   lastUpdatedSince: { type: Date, required: true },
@@ -54,6 +56,18 @@ const weatherSchema = new mongoose.Schema({
   POP100: {
     arrayLength: { type: Number, required: true },
     didItRainCount: { type: Number, required: true },
+  },
+  rainOutOfBlue: {
+    type: [
+      {
+        administrativeArea: { type: String, required: true },
+        baseDate: { type: Date, required: true },
+        didItRain: { type: Boolean, required: true },
+        POP: { type: Number, required: true },
+        PTY: { type: Number, required: true },
+        RN1: { type: Number, required: true },
+      },
+    ],
   },
 });
 
@@ -111,6 +125,7 @@ async function uploadWeatherData(data, dest) {
           },
         };
       }).reduce((acc, obj) => ({ ...acc, ...obj }), {}),
+      rainOutOfBlue: data?.rainOutOfBlue,
     };
 
     // Directly replace existing document or insert if not found

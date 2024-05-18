@@ -1,5 +1,5 @@
 const fs = require("fs");
-// const { CAPITAL_LOCATION } = require("./locations");
+const { CAPITAL_LOCATION } = require("./locations");
 
 // Function to write data to a file
 const writeDataFile = (data, destination, fileName) => {
@@ -11,8 +11,10 @@ const writeDataFile = (data, destination, fileName) => {
   data.forEach((item) => {
     Object.keys(item).forEach((key) => {
       // Add arrayLength and didItRainLength to totals
-      totalArrayCount += item[key].arrayLength;
-      totalDidItRainCount += item[key].didItRainLength;
+      if (key !== "rainOutOfBlue") {
+        totalArrayCount += item[key].arrayLength;
+        totalDidItRainCount += item[key].didItRainLength;
+      }
     });
   });
 
@@ -76,6 +78,11 @@ async function getAllMergedObjAndSaveFile(capitals) {
       }
     );
 
+    const rainOutOfBlue = POPObjects[0]["POP0"].filteredWeatherData.filter(
+      (item) => item.didItRain === true
+    );
+
+    POPObjects.push({ rainOutOfBlue: rainOutOfBlue });
     // Save each set of filtered data
 
     writeDataFile(POPObjects, dest, "POPstats");
