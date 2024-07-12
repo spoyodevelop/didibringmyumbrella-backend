@@ -1,5 +1,5 @@
-const { CAPITAL_LOCATION } = require("./locations");
 const fs = require("fs");
+const { calculateSonagiMeter } = require("./sonagiMeterCalculation");
 
 function getAllPOPs(capitals) {
   const totalPOPStats = {
@@ -44,20 +44,31 @@ function getAllPOPs(capitals) {
       totalPOPStats.totalDidItRainCount += didItRainLength;
     }
   }
+  const allPOPdataStats = require(`./data/totalOfAllArea/POPstats.js`);
+  let { totalSonagiMeter } =
+    allPOPdataStats.POPstats[allPOPdataStats.POPstats.length - 1];
+  //if totalSonagiMeter is not defined, create an empty array
+  if (!totalSonagiMeter) {
+    totalSonagiMeter = [];
+  }
+
+  totalSonagiMeter.sort((a, b) => a.baseDate - b.baseDate);
 
   totalPOPStats.rainOutOfBlue.sort((a, b) => {
-    return new Date(a.baseDate) - new Date(b.baseDate);
+    return new Date(a?.baseDate) - new Date(b?.baseDate);
   });
-  //why totalPOPStats.rainOutOfBlue is empty?
-
-  return totalPOPStats;
+  let sonagiMeter = calculateSonagiMeter(totalPOPStats);
+  totalSonagiMeter.push({ baseDate: new Date(), sonagiMeter });
+  return { totalPOPStats, totalSonagiMeter };
 }
 const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
   const lastUpdatedSince = new Date();
-  const totalPOPStats = getAllPOPs(capital);
+  const { totalPOPStats, totalSonagiMeter } = getAllPOPs(capital);
+
   const newData = {
-    lastUpdatedSince: lastUpdatedSince,
+    lastUpdatedSince,
     ...totalPOPStats,
+    totalSonagiMeter,
   };
   //add a updated date to data
   const filePath = `./data/${destination}/${fileName}.js`;

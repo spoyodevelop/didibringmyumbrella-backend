@@ -1,5 +1,4 @@
-const { getAllPOPs } = require("./getTotalPOPdata");
-const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations");
+const { CAPITAL_LOCATION } = require("./locations");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
@@ -8,7 +7,7 @@ const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
 //I can make this schema programmatically of course, but it is wise
 //to make ANY schemas explicit as possible for building safety net.
 
-const weatherSchema = new mongoose.Schema({
+const baseWeatherSchema = {
   administrativeArea: { type: String, required: true },
   lastUpdatedSince: { type: Date, required: true },
   totalArrayCount: { type: Number, required: true },
@@ -69,6 +68,29 @@ const weatherSchema = new mongoose.Schema({
       },
     ],
   },
+};
+const weatherSchema = new mongoose.Schema({
+  ...baseWeatherSchema,
+  administrativeArea: { type: String, required: true },
+  totalSonagiMeter: {
+    type: [
+      {
+        baseDate: { type: Date, required: true },
+        sonagiMeter: { type: Number, required: true },
+      },
+    ],
+    required: function () {
+      return this.administrativeArea === "totalOfAllArea";
+    },
+  },
+});
+
+// Conditional validation to ensure that totalSonagiMeter is not included for other administrative areas
+weatherSchema.pre("validate", function (next) {
+  if (this.administrativeArea !== "totalOfAllArea") {
+    this.totalSonagiMeter = undefined;
+  }
+  next();
 });
 
 const Weather = mongoose.model("Weather", weatherSchema);
@@ -92,6 +114,7 @@ async function getWeatherDataInsertToDB(capitals) {
       console.log("Disconnected from MongoDB for", dest);
     }
     const totalData = require("./data/totalOfAllArea/POPstats.js");
+
     const uploadingTotalData =
       totalData.POPstats[totalData.POPstats.length - 1];
 
@@ -127,6 +150,9 @@ async function uploadWeatherData(data, dest) {
       }).reduce((acc, obj) => ({ ...acc, ...obj }), {}),
       rainOutOfBlue: data?.rainOutOfBlue,
     };
+    if (dest === "totalOfAllArea" && data.totalSonagiMeter) {
+      weatherData.totalSonagiMeter = data.totalSonagiMeter;
+    }
 
     // Directly replace existing document or insert if not found
     await Weather.findOneAndReplace({ administrativeArea: dest }, weatherData, {
