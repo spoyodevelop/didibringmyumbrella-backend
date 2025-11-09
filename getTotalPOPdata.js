@@ -1,5 +1,6 @@
 const { CAPITAL_LOCATION } = require("./locations");
 const fs = require("fs");
+const Sentry = require("@sentry/node");
 
 function getAllPOPs(capitals) {
   const totalPOPStats = {
@@ -35,6 +36,10 @@ function getAllPOPs(capitals) {
     for (let i = 0; i <= 100; i += 10) {
       if (typeof POPstats !== "object" || POPstats === null) {
         console.log("POPstats is not defined or is not an object.");
+        Sentry.captureMessage("POPstats가 정의되지 않았거나 객체가 아닙니다", {
+          level: "warning",
+          tags: { service: "total-pop", destination: dest },
+        });
         continue;
       }
 
@@ -72,6 +77,10 @@ const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
     `module.exports = ${JSON.stringify(existingData)};`
   );
   console.log(`Data successfully saved to ${filePath}`);
+  Sentry.captureMessage(`${filePath}에 전체 강수확률 데이터가 저장되었습니다`, {
+    level: "info",
+    tags: { service: "total-pop", destination, fileName },
+  });
 };
 
 module.exports = {

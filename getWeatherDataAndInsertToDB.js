@@ -2,6 +2,7 @@ const { getAllPOPs } = require("./getTotalPOPdata");
 const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations");
 require("dotenv").config();
 const mongoose = require("mongoose");
+const Sentry = require("@sentry/node");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
 
@@ -84,12 +85,20 @@ async function getWeatherDataInsertToDB(capitals) {
       const dest = capital.administrativeArea;
 
       console.log("Connected to MongoDB for", dest);
+      Sentry.captureMessage(`${dest} MongoDB 연결이 완료되었습니다`, {
+        level: "info",
+        tags: { service: "db-uploader", destination: dest },
+      });
 
       const weatherData = require(`./data/${dest}/POPstats.js`);
       const uploadingData =
         weatherData.POPstats[weatherData.POPstats.length - 1];
       await uploadWeatherData(uploadingData, dest); // Pass dest to uploadWeatherData
       console.log("Disconnected from MongoDB for", dest);
+      Sentry.captureMessage(`${dest} 데이터 업로드가 완료되었습니다`, {
+        level: "info",
+        tags: { service: "db-uploader", destination: dest },
+      });
     }
     const totalData = require("./data/totalOfAllArea/POPstats.js");
     const uploadingTotalData =
@@ -97,10 +106,18 @@ async function getWeatherDataInsertToDB(capitals) {
 
     await uploadWeatherData(uploadingTotalData, "totalOfAllArea"); // Pass dest to uploadWeatherData
     console.log("Disconnected from MongoDB for", "totalOfAllArea");
+    Sentry.captureMessage("전체 지역 데이터 업로드가 완료되었습니다", {
+      level: "info",
+      tags: { service: "db-uploader", destination: "totalOfAllArea" },
+    });
     // Disconnect from MongoDB after all operations are complete
     await mongoose.disconnect();
   } catch (error) {
     console.error("Error:", error);
+    Sentry.captureException(error, {
+      level: "error",
+      tags: { service: "db-uploader", step: "uploadToDB" },
+    });
     if (connection) {
       // If an error occurs, close the connection
       await mongoose.disconnect();
@@ -134,8 +151,16 @@ async function uploadWeatherData(data, dest) {
     });
 
     console.log(`Weather data for ${dest} saved to MongoDB`);
+    Sentry.captureMessage(`${dest} 날씨 데이터가 MongoDB에 저장되었습니다`, {
+      level: "info",
+      tags: { service: "db-uploader", destination: dest },
+    });
   } catch (error) {
     console.error(`Error saving weather data for ${dest}:`, error);
+    Sentry.captureException(error, {
+      level: "error",
+      tags: { service: "db-uploader", destination: dest, step: "saveData" },
+    });
   }
 }
 
