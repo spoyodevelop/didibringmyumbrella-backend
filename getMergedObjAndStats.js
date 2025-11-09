@@ -72,24 +72,49 @@ async function getAllMergedObjAndSaveFile(capitals) {
             didItRainLength: filteredData.filter(
               (item) => item.didItRain === true
             ).length,
-            filteredWeatherData: filteredData,
           },
         };
       }
     );
 
-    const rainOutOfBlue = POPObjects[0]["POP0"].filteredWeatherData.filter(
+    const rainOutOfBlueData = saveByPOP(weatherData.weatherData, 0).filter(
       (item) => item.didItRain === true
     );
 
-    POPObjects.push({ rainOutOfBlue: rainOutOfBlue });
-    // Save each set of filtered data
+    POPObjects.push({
+      rainOutOfBlue: rainOutOfBlueData,
+    });
 
     writeDataFile(POPObjects, dest, "POPstats");
   });
 }
 
-// Call the function with capital locations
+const getFilteredWeatherData = (destination, popValue) => {
+  const fileName = "weatherData";
+  const weatherData = require(`./data/${destination}/${fileName}.js`);
+
+  function rounding(number) {
+    if (number % 10 < 5) {
+      return Math.floor(number / 10) * 10;
+    } else {
+      return Math.ceil(number / 10) * 10;
+    }
+  }
+
+  return weatherData.weatherData
+    .filter((item) => rounding(item.mergedObj.POP) === popValue)
+    .map((item) => item.mergedObj);
+};
+
+const getRainOutOfBlueData = (destination) => {
+  const fileName = "POPstats";
+  const popstatsData = require(`./data/${destination}/${fileName}.js`);
+  const latestStats = popstatsData.POPstats[popstatsData.POPstats.length - 1];
+  return latestStats.rainOutOfBlue || [];
+};
+
 module.exports = {
   getAllMergedObjAndSaveFile,
+  getFilteredWeatherData,
+  getRainOutOfBlueData,
 };

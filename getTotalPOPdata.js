@@ -26,11 +26,13 @@ function getAllPOPs(capitals) {
 
     const POPstats = weatherData.POPstats[weatherData.POPstats.length - 1];
 
-    POPstats.rainOutOfBlue.forEach((item) => {
-      totalPOPStats.rainOutOfBlue.push({ administrativeArea: dest, ...item });
-    });
+    if (POPstats.rainOutOfBlue && Array.isArray(POPstats.rainOutOfBlue)) {
+      POPstats.rainOutOfBlue.forEach((item) => {
+        totalPOPStats.rainOutOfBlue.push({ administrativeArea: dest, ...item });
+      });
+    }
+
     for (let i = 0; i <= 100; i += 10) {
-      //This SHOULDN'T HAPPEN
       if (typeof POPstats !== "object" || POPstats === null) {
         console.log("POPstats is not defined or is not an object.");
         continue;
@@ -48,7 +50,6 @@ function getAllPOPs(capitals) {
   totalPOPStats.rainOutOfBlue.sort((a, b) => {
     return new Date(a.baseDate) - new Date(b.baseDate);
   });
-  //why totalPOPStats.rainOutOfBlue is empty?
 
   return totalPOPStats;
 }
