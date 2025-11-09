@@ -81,7 +81,7 @@ const job = schedule.scheduleJob(
       const endTime = new Date();
       const duration = (endTime - startTime) / 1000;
       console.log(
-        `[${endTime.toISOString()}] Cron job completed successfully (${duration}s)`
+        `[${endTime.toLocaleDateString('ko-KR')}] Cron job completed successfully (${duration}s)`
       );
       Sentry.captureMessage("크론잡이 성공적으로 완료되었습니다", {
         level: "info",
