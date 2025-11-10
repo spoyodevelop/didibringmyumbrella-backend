@@ -41,7 +41,6 @@ const job = schedule.scheduleJob(
     });
 
     try {
-      // Step 1: 날씨 데이터 처리 및 파일 저장
       console.log("Step 1: Processing weather data...");
       await processDataAndWriteToFile(CAPITAL_LOCATION, minute);
       Sentry.captureMessage("날씨 데이터 처리가 완료되었습니다", {
@@ -49,7 +48,7 @@ const job = schedule.scheduleJob(
         tags: { service: "weather-cron", step: "processData" },
       });
 
-      // Step 2: 병합된 객체와 통계 저장
+      
       console.log("Step 2: Merging objects and stats...");
       await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
       Sentry.captureMessage("객체 병합 및 통계 저장이 완료되었습니다", {
@@ -57,7 +56,7 @@ const job = schedule.scheduleJob(
         tags: { service: "weather-cron", step: "mergeStats" },
       });
 
-      // Step 3: 전체 POP 데이터 저장
+      
       console.log("Step 3: Writing total POP data...");
       await writeTotalPOPDataToFile(
         "totalOfAllArea",
@@ -69,7 +68,6 @@ const job = schedule.scheduleJob(
         tags: { service: "weather-cron", step: "totalPOP" },
       });
 
-      // Step 4: DB에 날씨 데이터 삽입
       console.log("Step 4: Inserting weather data to DB...");
       await getWeatherDataInsertToDB(CAPITAL_LOCATION);
       Sentry.captureMessage("DB에 날씨 데이터 삽입이 완료되었습니다", {
@@ -77,7 +75,6 @@ const job = schedule.scheduleJob(
         tags: { service: "weather-cron", step: "insertDB" },
       });
 
-      // 완료
       const endTime = new Date();
       const duration = (endTime - startTime) / 1000;
       console.log(
