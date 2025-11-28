@@ -63,7 +63,6 @@ const job = schedule.scheduleJob(
     });
 
     try {
-      // Step 1: 날씨 데이터 처리 및 파일 저장
       console.log("Step 1: Processing weather data...");
       Sentry.addBreadcrumb({
         category: "cron.step",
@@ -79,7 +78,6 @@ const job = schedule.scheduleJob(
         level: "info",
       });
 
-      // Step 2: 병합된 객체와 통계 저장
       console.log("Step 2: Merging objects and stats...");
       Sentry.addBreadcrumb({
         category: "cron.step",
@@ -95,7 +93,6 @@ const job = schedule.scheduleJob(
         level: "info",
       });
 
-      // Step 3: 전체 POP 데이터 저장
       console.log("Step 3: Writing total POP data...");
       Sentry.addBreadcrumb({
         category: "cron.step",
@@ -115,7 +112,6 @@ const job = schedule.scheduleJob(
         level: "info",
       });
 
-      // Step 4: DB에 날씨 데이터 삽입
       console.log("Step 4: Inserting weather data to DB...");
       Sentry.addBreadcrumb({
         category: "cron.step",
@@ -131,11 +127,12 @@ const job = schedule.scheduleJob(
         level: "info",
       });
 
-      // 완료
       const endTime = new Date();
       const duration = (endTime - startTime) / 1000;
       console.log(
-        `[${endTime.toISOString()}] ✅ Cron job completed successfully (${duration}s)`
+        `[${endTime.toLocaleDateString(
+          "ko-KR"
+        )}] Cron job completed successfully (${duration}s)`
       );
 
       Sentry.addBreadcrumb({
