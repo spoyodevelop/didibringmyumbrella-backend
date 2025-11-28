@@ -1,5 +1,4 @@
 const fs = require("fs");
-const Sentry = require("@sentry/node");
 const {
   formatPlusOneHour,
   JSDateToConvertedDate,
@@ -14,10 +13,6 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
       try {
         const { administrativeArea, koreanName } = capital;
         console.log(`${koreanName}의 데이터를 가져옵니다....`);
-        Sentry.captureMessage(`${koreanName}의 데이터를 가져오는 중입니다`, {
-          level: "info",
-          tags: { service: "weather-processor", location: koreanName },
-        });
 
         const currentData = await fetchWeatherDataWithRetry(
           "DB",
@@ -82,15 +77,6 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
           capital,
           error
         );
-        Sentry.captureException(error, {
-          level: "error",
-          tags: {
-            service: "weather-processor",
-            location: capital.koreanName,
-            step: "fetchCapitalData",
-          },
-          extra: { capital },
-        });
         throw error;
       }
     });
@@ -99,10 +85,6 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
     return processedData;
   } catch (error) {
     console.error("Error processing location data", error);
-    Sentry.captureException(error, {
-      level: "error",
-      tags: { service: "weather-processor", step: "processLocationData" },
-    });
     throw error;
   }
 }
@@ -118,16 +100,8 @@ async function writeDataToFile(data, destination, fileName) {
     );
 
     console.log("Data written to file successfully");
-    Sentry.captureMessage("파일에 데이터가 성공적으로 저장되었습니다", {
-      level: "info",
-      tags: { service: "weather-processor", destination, fileName },
-    });
   } catch (error) {
     console.error("Error writing data to file", error);
-    Sentry.captureException(error, {
-      level: "error",
-      tags: { service: "weather-processor", step: "writeFile", destination },
-    });
     throw error;
   }
 }
@@ -143,16 +117,9 @@ async function processDataAndWriteToFile(capital, fetchingMinutes) {
     await Promise.all(promises);
 
     console.log("All data has been written to files successfully.");
-    Sentry.captureMessage("모든 데이터가 파일에 성공적으로 저장되었습니다", {
-      level: "info",
-      tags: { service: "weather-processor", step: "complete" },
-    });
   } catch (error) {
     console.error("Error processing weather data:", error);
-    Sentry.captureException(error, {
-      level: "error",
-      tags: { service: "weather-processor", step: "processAndWrite" },
-    });
+    throw error;
   }
 }
 

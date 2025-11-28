@@ -1,6 +1,5 @@
 const { XMLParser } = require("fast-xml-parser");
 const { fetchClientLocationsData } = require("./locationMapping");
-const Sentry = require("@sentry/node");
 
 const { getTimeObj, getUrl } = require("./getUrlAndTimeObj");
 const { DUMMY_CAPITAL } = require("./locations");
@@ -13,35 +12,12 @@ async function fetchWeatherDataWithRetry(usage, dataType, location, delay) {
   for (let tries = 1; tries <= maxTries; tries++) {
     try {
       if (tries === 1) {
-        console.log(`fetching Weather Data... this is first try....`);
-        Sentry.captureMessage(
-          `${location.administrativeArea} 날씨 데이터를 가져오는 중입니다`,
-          {
-            level: "info",
-            tags: {
-              service: "weather-fetcher",
-              location: location.administrativeArea,
-              attempt: tries,
-            },
-          }
+        console.log(
+          `Fetching weather data for ${location.administrativeArea}... (first try)`
         );
       } else {
         console.log(
-          `fetching weather data... this is ${tries} tries and ${
-            maxTries - tries
-          } tries remaining`
-        );
-        Sentry.captureMessage(
-          `${location.administrativeArea} 날씨 데이터 재시도 중입니다 (${tries}/${maxTries})`,
-          {
-            level: "warning",
-            tags: {
-              service: "weather-fetcher",
-              location: location.administrativeArea,
-              attempt: tries,
-            },
-            extra: { remainingTries: maxTries - tries },
-          }
+          `Retrying weather data for ${location.administrativeArea}... (attempt ${tries}/${maxTries})`
         );
       }
       const weatherData = await fetchWeatherData(usage, dataType, location);
@@ -52,14 +28,7 @@ async function fetchWeatherDataWithRetry(usage, dataType, location, delay) {
         const finalError = new Error(
           `Failed to fetch data for ${location.administrativeArea} after ${maxTries} attempts. Error: ${error.message}`
         );
-        Sentry.captureException(finalError, {
-          level: "error",
-          tags: {
-            service: "weather-fetcher",
-            location: location.administrativeArea,
-          },
-          extra: { maxTries, originalError: error.message },
-        });
+        console.error(finalError.message);
         throw finalError;
       }
 
@@ -81,14 +50,9 @@ async function fetchWeatherData(usage, dataType, location) {
       retries: 10,
       retryDelay: (...args) => axiosRetry.exponentialDelay(...args, 2000),
       onRetry: (retryCount, error, requestConfig) => {
-        console.log(`retry count: `, retryCount);
-        Sentry.captureMessage(`Axios 재시도 중 (${retryCount}회)`, {
-          level: "debug",
-          tags: {
-            service: "weather-fetcher",
-            location: location.administrativeArea,
-          },
-        });
+        console.log(
+          `Axios retry count: ${retryCount} for ${location.administrativeArea}`
+        );
       },
     });
 
@@ -135,17 +99,10 @@ async function fetchWeatherData(usage, dataType, location) {
       ...items,
     };
   } catch (error) {
-    console.error("An error occurred while fetching weather data:", error);
-    Sentry.captureException(error, {
-      level: "error",
-      tags: {
-        service: "weather-fetcher",
-        location: location.administrativeArea,
-        usage,
-        dataType,
-      },
-      extra: { url },
-    });
+    console.error(
+      `Error fetching weather data for ${location.administrativeArea}:`,
+      error.message
+    );
     throw error; // Re-throw the error to propagate it
   }
 }

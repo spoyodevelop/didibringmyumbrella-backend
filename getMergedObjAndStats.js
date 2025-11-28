@@ -1,5 +1,4 @@
 const fs = require("fs");
-const Sentry = require("@sentry/node");
 const { CAPITAL_LOCATION } = require("./locations");
 
 // Function to write data to a file
@@ -42,10 +41,6 @@ const writeDataFile = (data, destination, fileName) => {
     `module.exports = ${JSON.stringify(existingData)};`
   );
   console.log(`Data successfully saved to ${filePath}`);
-  Sentry.captureMessage(`${filePath}에 데이터가 성공적으로 저장되었습니다`, {
-    level: "info",
-    tags: { service: "stats-merger", destination, fileName },
-  });
 };
 
 async function getAllMergedObjAndSaveFile(capitals) {
