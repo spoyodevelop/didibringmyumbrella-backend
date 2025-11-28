@@ -1,10 +1,10 @@
 {
-  "name": "weather-accuracy-statistics",
-  "version": "1.0.0",
+  "name": "didibringmyumbrella-cronjob",
+  "version": "1.0.1",
   "description": "Making stats about Probability of precipitation from korea metrorological api",
-  "main": "dateFormatting.js",
+  "main": "cronjob.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cron" : "node cronjob.js"
   },
   "keywords": [
     "rain",
