@@ -1,5 +1,8 @@
-const { CAPITAL_LOCATION } = require("./locations");
 const fs = require("fs");
+const path = require("path");
+
+// data 폴더 경로 (프로젝트 루트 기준)
+const DATA_DIR = path.join(__dirname, "../../../data");
 
 function getAllPOPs(capitals) {
   const totalPOPStats = {
@@ -22,7 +25,11 @@ function getAllPOPs(capitals) {
 
   for (const capital of capitals) {
     const dest = capital.administrativeArea;
-    const weatherData = require(`./data/${dest}/POPstats.js`);
+    const filePath = path.join(DATA_DIR, dest, "POPstats.js");
+    
+    // Clear require cache
+    delete require.cache[require.resolve(filePath)];
+    const weatherData = require(filePath);
 
     const POPstats = weatherData.POPstats[weatherData.POPstats.length - 1];
 
@@ -55,6 +62,7 @@ function getAllPOPs(capitals) {
 
   return totalPOPStats;
 }
+
 const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
   const lastUpdatedSince = new Date();
   const totalPOPStats = getAllPOPs(capital);
@@ -62,10 +70,13 @@ const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
     lastUpdatedSince: lastUpdatedSince,
     ...totalPOPStats,
   };
-  //add a updated date to data
-  const filePath = `./data/${destination}/${fileName}.js`;
+
+  const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
+  
+  // Clear require cache
+  delete require.cache[require.resolve(filePath)];
   const existingData = require(filePath);
-  // Remove the first element of the array and push the new data
+  
   existingData.POPstats.shift();
   existingData.POPstats.push(newData);
 
@@ -77,5 +88,7 @@ const writeTotalPOPDataToFile = async (destination, fileName, capital) => {
 };
 
 module.exports = {
+  getAllPOPs,
   writeTotalPOPDataToFile,
 };
+

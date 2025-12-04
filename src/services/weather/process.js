@@ -1,11 +1,10 @@
 const fs = require("fs");
-const {
-  formatPlusOneHour,
-  JSDateToConvertedDate,
-  baseTimes,
-} = require("./dateFormatting.js");
-const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations.js");
-const { fetchWeatherDataWithRetry } = require("./fetchWeather.js");
+const path = require("path");
+const { JSDateToConvertedDate } = require("../../utils/time");
+const { fetchWeatherDataWithRetry } = require("./fetch");
+
+// data 폴더 경로 (프로젝트 루트 기준)
+const DATA_DIR = path.join(__dirname, "../../../data");
 
 async function processWeatherData(CAPITALS, fetchingMinute) {
   try {
@@ -28,6 +27,7 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
         );
 
         const newDate = new Date();
+
         function createBaseDate(fetchingMinute) {
           const date = new Date();
           date.setMinutes(fetchingMinute);
@@ -61,6 +61,7 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
           RN1: RN1.RN1.obsrValue,
           didItRain: PTY.PTY.obsrValue > 0,
         };
+
         return {
           date: newDate,
           mergedObj,
@@ -91,11 +92,15 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
 
 async function writeDataToFile(data, destination, fileName) {
   try {
-    const existingData = require(`./data/${destination}/${fileName}.js`);
+    const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
+    
+    // Clear require cache to get fresh data
+    delete require.cache[require.resolve(filePath)];
+    const existingData = require(filePath);
     existingData.weatherData.push(data);
 
     fs.writeFileSync(
-      `./data/${destination}/${fileName}.js`,
+      filePath,
       `module.exports = ${JSON.stringify(existingData)};`
     );
 
@@ -124,3 +129,4 @@ async function processDataAndWriteToFile(capital, fetchingMinutes) {
 }
 
 module.exports = { processDataAndWriteToFile };
+

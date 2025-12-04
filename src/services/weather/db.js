@@ -1,12 +1,12 @@
-const { getAllPOPs } = require("./getTotalPOPdata");
-const { DUMMY_CAPITAL, CAPITAL_LOCATION } = require("./locations");
+const path = require("path");
 require("dotenv").config();
 const mongoose = require("mongoose");
+
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
 
-//I can make this schema programmatically of course, but it is wise
-//to make ANY schemas explicit as possible for building safety net.
+// data 폴더 경로 (프로젝트 루트 기준)
+const DATA_DIR = path.join(__dirname, "../../../data");
 
 const weatherSchema = new mongoose.Schema({
   administrativeArea: { type: String, required: true },
@@ -74,9 +74,8 @@ const weatherSchema = new mongoose.Schema({
 const Weather = mongoose.model("Weather", weatherSchema);
 
 async function getWeatherDataInsertToDB(capitals) {
-  let connection; // Declare connection variable outside the try-catch block
+  let connection;
   try {
-    // Connect to MongoDB before the loop
     const url = `mongodb+srv://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@weathercluster.wnaoze9.mongodb.net/POPdata`;
     connection = await mongoose.connect(url, {});
 
@@ -85,26 +84,35 @@ async function getWeatherDataInsertToDB(capitals) {
 
       console.log("Connected to MongoDB for", dest);
 
-      const weatherData = require(`./data/${dest}/POPstats.js`);
+      const filePath = path.join(DATA_DIR, dest, "POPstats.js");
+      
+      // Clear require cache
+      delete require.cache[require.resolve(filePath)];
+      const weatherData = require(filePath);
+      
       const uploadingData =
         weatherData.POPstats[weatherData.POPstats.length - 1];
-      await uploadWeatherData(uploadingData, dest); // Pass dest to uploadWeatherData
+      await uploadWeatherData(uploadingData, dest);
       console.log("Uploaded data for", dest);
     }
-    const totalData = require("./data/totalOfAllArea/POPstats.js");
+
+    const totalFilePath = path.join(DATA_DIR, "totalOfAllArea", "POPstats.js");
+    
+    // Clear require cache
+    delete require.cache[require.resolve(totalFilePath)];
+    const totalData = require(totalFilePath);
+    
     const uploadingTotalData =
       totalData.POPstats[totalData.POPstats.length - 1];
 
-    await uploadWeatherData(uploadingTotalData, "totalOfAllArea"); // Pass dest to uploadWeatherData
+    await uploadWeatherData(uploadingTotalData, "totalOfAllArea");
     console.log("Uploaded data for totalOfAllArea");
 
-    // Disconnect from MongoDB after all operations are complete
     await mongoose.disconnect();
     console.log("Disconnected from MongoDB");
   } catch (error) {
     console.error("Error uploading to DB:", error);
     if (connection) {
-      // If an error occurs, close the connection
       await mongoose.disconnect();
     }
     throw error;
@@ -131,7 +139,6 @@ async function uploadWeatherData(data, dest) {
       rainOutOfBlue: data?.rainOutOfBlue,
     };
 
-    // Directly replace existing document or insert if not found
     await Weather.findOneAndReplace({ administrativeArea: dest }, weatherData, {
       upsert: true,
     });
@@ -147,3 +154,4 @@ module.exports = {
   getWeatherDataInsertToDB,
   uploadWeatherData,
 };
+

@@ -4,13 +4,34 @@
   "description": "Making stats about Probability of precipitation from korea metrorological api",
   "main": "cronjob.js",
   "scripts": {
-    "cron": "node cronjob.js",
-    "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:stop": "pm2 stop weather-cronjob",
-    "pm2:restart": "pm2 restart weather-cronjob",
-    "pm2:logs": "pm2 logs weather-cronjob",
-    "pm2:monit": "pm2 monit",
-    "pm2:delete": "pm2 delete weather-cronjob"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "cron": "node src/cron/weather.js",
+    "backup": "node src/cron/backup.js",
+    "backup:manual": "node src/cron/backup.js --manual",
+    "manual": "node src/cron/manual.js",
+    "manual:weather": "node src/cron/manual.js --weather-only",
+    "manual:backup": "node src/cron/manual.js --backup-only",
+    "weather:manual": "node src/cron/weather.js --manual",
+    "compress": "node src/services/stats/compress.js",
+    
+    "pm2:start": "npx pm2 start ecosystem.config.js",
+    "pm2:stop": "npx pm2 stop all",
+    "pm2:restart": "npx pm2 restart all",
+    "pm2:logs": "npx pm2 logs",
+    "pm2:monit": "npx pm2 monit",
+    "pm2:delete": "npx pm2 delete all",
+    "pm2:save": "npx pm2 save",
+    
+    "weather:start": "npx pm2 start ecosystem.config.js --only weather-cronjob",
+    "weather:stop": "npx pm2 stop weather-cronjob",
+    "weather:restart": "npx pm2 restart weather-cronjob",
+    "weather:logs": "npx pm2 logs weather-cronjob",
+    
+    "backup:start": "npx pm2 start ecosystem.config.js --only backup-cronjob",
+    "backup:stop": "npx pm2 stop backup-cronjob",
+    "backup:restart": "npx pm2 restart backup-cronjob",
+    "backup:logs": "npx pm2 logs backup-cronjob"
   },
   "keywords": [
     "rain",
@@ -35,5 +56,8 @@
     "node-cron": "^3.0.3",
     "node-schedule": "^2.1.1",
     "pm2": "^5.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

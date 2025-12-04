@@ -1,7 +1,9 @@
 const fs = require("fs");
-const { CAPITAL_LOCATION } = require("./locations");
+const path = require("path");
 
-// Function to write data to a file
+// data 폴더 경로 (프로젝트 루트 기준)
+const DATA_DIR = path.join(__dirname, "../../../data");
+
 const writeDataFile = (data, destination, fileName) => {
   const lastUpdatedSince = new Date();
 
@@ -10,7 +12,6 @@ const writeDataFile = (data, destination, fileName) => {
 
   data.forEach((item) => {
     Object.keys(item).forEach((key) => {
-      // Add arrayLength and didItRainLength to totals
       if (key !== "rainOutOfBlue") {
         totalArrayCount += item[key].arrayLength;
         totalDidItRainCount += item[key].didItRainLength;
@@ -29,10 +30,13 @@ const writeDataFile = (data, destination, fileName) => {
       return acc;
     }, {}),
   };
-  //add a updated date to data
-  const filePath = `./data/${destination}/${fileName}.js`;
+
+  const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
+  
+  // Clear require cache
+  delete require.cache[require.resolve(filePath)];
   const existingData = require(filePath);
-  // Remove the first element of the array and push the new data
+  
   existingData.POPstats.shift();
   existingData.POPstats.push(newData);
 
@@ -47,8 +51,12 @@ async function getAllMergedObjAndSaveFile(capitals) {
   capitals.forEach((capital) => {
     const dest = capital.administrativeArea;
     const fileName = "weatherData";
-    const weatherData = require(`./data/${dest}/${fileName}.js`);
-    //todo: adjust data that should be round-to-nearest-even after 2 weeks or so.
+    const filePath = path.join(DATA_DIR, dest, `${fileName}.js`);
+    
+    // Clear require cache
+    delete require.cache[require.resolve(filePath)];
+    const weatherData = require(filePath);
+
     const saveByPOP = (data, popValue) => {
       function rounding(number) {
         if (number % 10 < 5) {
@@ -62,7 +70,6 @@ async function getAllMergedObjAndSaveFile(capitals) {
         .map((item) => item.mergedObj);
     };
 
-    // 0부터 100까지 10 단위로 POP 값에 대한 객체들 저장
     const POPObjects = Array.from({ length: 11 }, (_, index) => index * 10).map(
       (popValue) => {
         const filteredData = saveByPOP(weatherData.weatherData, popValue);
@@ -91,7 +98,11 @@ async function getAllMergedObjAndSaveFile(capitals) {
 
 const getFilteredWeatherData = (destination, popValue) => {
   const fileName = "weatherData";
-  const weatherData = require(`./data/${destination}/${fileName}.js`);
+  const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
+  
+  // Clear require cache
+  delete require.cache[require.resolve(filePath)];
+  const weatherData = require(filePath);
 
   function rounding(number) {
     if (number % 10 < 5) {
@@ -108,7 +119,12 @@ const getFilteredWeatherData = (destination, popValue) => {
 
 const getRainOutOfBlueData = (destination) => {
   const fileName = "POPstats";
-  const popstatsData = require(`./data/${destination}/${fileName}.js`);
+  const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
+  
+  // Clear require cache
+  delete require.cache[require.resolve(filePath)];
+  const popstatsData = require(filePath);
+  
   const latestStats = popstatsData.POPstats[popstatsData.POPstats.length - 1];
   return latestStats.rainOutOfBlue || [];
 };
@@ -118,3 +134,4 @@ module.exports = {
   getFilteredWeatherData,
   getRainOutOfBlueData,
 };
+

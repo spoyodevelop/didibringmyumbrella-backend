@@ -229,6 +229,7 @@ const CAPITAL_LOCATION = [
     midAreaNumber: "11G00000",
   },
 ];
+
 const DUMMY_CAPITAL = [
   {
     administrativeArea: "Seoul",
@@ -243,8 +244,10 @@ const DUMMY_CAPITAL = [
     koreanName: "부산",
   },
 ];
+
 module.exports = {
   DUMMY_POSITION,
   CAPITAL_LOCATION,
   DUMMY_CAPITAL,
 };
+

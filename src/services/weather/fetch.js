@@ -1,8 +1,5 @@
 const { XMLParser } = require("fast-xml-parser");
-const { fetchClientLocationsData } = require("./locationMapping");
-
-const { getTimeObj, getUrl } = require("./getUrlAndTimeObj");
-const { DUMMY_CAPITAL } = require("./locations");
+const { getTimeObj, getUrl } = require("../../utils/url");
 const axios = require("axios");
 const axiosRetry = require("axios-retry").default;
 
@@ -32,9 +29,8 @@ async function fetchWeatherDataWithRetry(usage, dataType, location, delay) {
         throw finalError;
       }
 
-      // Exponentially increase delay
       await new Promise((resolve) => setTimeout(resolve, delay));
-      delay *= 2; // Double the delay for the next retry
+      delay *= 2;
     }
   }
 }
@@ -45,7 +41,6 @@ async function fetchWeatherData(usage, dataType, location) {
   console.log(url);
 
   try {
-    // Configure axios retry. which is pretty mucccchhhh useless now.
     axiosRetry(axios, {
       retries: 10,
       retryDelay: (...args) => axiosRetry.exponentialDelay(...args, 2000),
@@ -56,7 +51,6 @@ async function fetchWeatherData(usage, dataType, location) {
       },
     });
 
-    // Fetch weather data
     const response = await axios.get(url);
 
     if (response.status !== 200) {
@@ -68,6 +62,7 @@ async function fetchWeatherData(usage, dataType, location) {
     const xmlData = await response.data;
     const parser = new XMLParser();
     let jObj = parser.parse(xmlData);
+
     if (!jObj || !jObj.response) {
       throw new Error(
         `Failed to fetch data for ${location.administrativeArea}. it has no jObj or jObj response`
@@ -89,6 +84,7 @@ async function fetchWeatherData(usage, dataType, location) {
 
     const newDate = new Date();
     const items = jObj.response.body.items;
+
     return {
       newDate,
       dataType,
@@ -103,51 +99,11 @@ async function fetchWeatherData(usage, dataType, location) {
       `Error fetching weather data for ${location.administrativeArea}:`,
       error.message
     );
-    throw error; // Re-throw the error to propagate it
+    throw error;
   }
 }
 
-// DUMMY_CAPITAL.forEach((capital) => {
-//   fetchWeatherDataWithRetry("DB", "currentData", capital, 1000).then((data) =>
-//     console.log(data)
-//   );
-// });
-
-//TODO server-side와 client-side 분리하기
-//mongodb 와 연결하는 파일 따로 만들기.
-
-// locations.forEach((location) => {
-// mergeLocationsData(CAPITAL_LOCATION, location).then((mergedLocation) => {
-//   // fetchWeatherData("client", "pastData", mergedLocation).then((data) =>
-//   //   console.log(data)
-//   // );
-//   fetchWeatherData("client", "currentData", mergedLocation).then((data) =>
-//     console.log(data)
-//   );
-// fetchWeatherData("DB", "pastData", mergedLocation).then((data) =>
-//   console.log(data)
-// );
-// fetchWeatherData("DB", "currentData", mergedLocation).then((data) =>
-//   console.log(data)
-// );
-//     });
-//   });
-// });
-// fetchLocationsData().then((locations) => {
-//   locations.forEach((location) => {
-//     console.log(location);
-//     mergeLocationsData(location).then((mergedLocation) =>
-//       console.log(mergedLocation)
-//     );
-//   });
-// });
-
-// fetchLocationsData().then((locations) =>
-//   locations.forEach((location) => {
-//     console.log(location);
-//     console.log(getLocationObj("client", location));
-//   })
-// );
 module.exports = {
   fetchWeatherDataWithRetry,
 };
+

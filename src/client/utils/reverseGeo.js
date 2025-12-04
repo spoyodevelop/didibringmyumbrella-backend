@@ -1,15 +1,17 @@
 const axios = require("axios");
 const axiosRetry = require("axios-retry").default;
-const { dfs_xy_conv } = require("./positionFormatting");
+const { dfs_xy_conv } = require("../../utils/position");
+const { CAPITAL_LOCATION } = require("../../config/locations");
 require("dotenv").config();
-const naverAPIClientID = process.env.NAVER_CLIENT_ID;
 
+const naverAPIClientID = process.env.NAVER_CLIENT_ID;
 const naverAPIClientSecret = process.env.NAVER_CLIENT_SECRET;
-const {
-  DUMMY_CAPITAL,
-  DUMMY_POSITION,
-  CAPITAL_LOCATION,
-} = require("./locations");
+
+/**
+ * 네이버 API를 이용한 역지오코딩
+ * @param {Object} location - { place, latitude, longitude }
+ * @returns {Object} 변환된 좌표와 행정구역 정보
+ */
 async function reverseGeocode(location) {
   const { place, latitude, longitude } = location;
   const url = `https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=${longitude},${latitude}&orders=legalcode&output=json`;
@@ -17,6 +19,7 @@ async function reverseGeocode(location) {
     "X-NCP-APIGW-API-KEY-ID": naverAPIClientID,
     "X-NCP-APIGW-API-KEY": naverAPIClientSecret,
   };
+
   try {
     axiosRetry(axios, { retries: 3 });
     const response = await axios.get(url, { headers });
@@ -41,6 +44,9 @@ async function reverseGeocode(location) {
   }
 }
 
+/**
+ * 위치 데이터 병합
+ */
 async function mergeLocationsData(capitalLocationData, locationData) {
   const matchedPlace = capitalLocationData.filter(
     (capital) =>
@@ -53,6 +59,10 @@ async function mergeLocationsData(capitalLocationData, locationData) {
   };
 }
 
+/**
+ * 클라이언트용 위치 데이터 가져오기
+ * @param {Object} position - { place, latitude, longitude }
+ */
 async function fetchClientLocationData(position) {
   try {
     const locationData = await reverseGeocode(position);
@@ -64,8 +74,13 @@ async function fetchClientLocationData(position) {
     return mergedLocationsData;
   } catch (error) {
     console.error("Error in fetchLocationsData:", error);
-    throw error; // Pass the error to the caller
+    throw error;
   }
 }
 
-module.exports = { fetchClientLocationData };
+module.exports = {
+  reverseGeocode,
+  mergeLocationsData,
+  fetchClientLocationData,
+};
+

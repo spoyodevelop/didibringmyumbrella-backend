@@ -2,21 +2,19 @@ const schedule = require("node-schedule");
 const Sentry = require("@sentry/node");
 require("dotenv").config();
 
-// Sentry 초기화 - 에러만 추적
+// Sentry 초기화
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || "production",
-  tracesSampleRate: 0.1, // 샘플링 레이트 낮춤
-  maxBreadcrumbs: 50, // Breadcrumb 최대 개수
+  tracesSampleRate: 0.1,
+  maxBreadcrumbs: 50,
 });
 
-const { CAPITAL_LOCATION } = require("./locations.js");
-const { processDataAndWriteToFile } = require("./processWeatherDataAndSave.js");
-const { getAllMergedObjAndSaveFile } = require("./getMergedObjAndStats.js");
-const {
-  getWeatherDataInsertToDB,
-} = require("./getWeatherDataAndInsertToDB.js");
-const { writeTotalPOPDataToFile } = require("./getTotalPOPdata.js");
+const { CAPITAL_LOCATION } = require("../config/locations");
+const { processDataAndWriteToFile } = require("../services/weather/process");
+const { getAllMergedObjAndSaveFile } = require("../services/stats/merged");
+const { getWeatherDataInsertToDB } = require("../services/weather/db");
+const { writeTotalPOPDataToFile } = require("../services/stats/total");
 
 const minute = 15;
 
@@ -59,13 +57,12 @@ const job = schedule.scheduleJob(
           type: "crontab",
           value: `${minute} 3,6,9,12,15,18,21,0 * * *`,
         },
-        checkinMargin: 5, // 5분 마진
-        maxRuntime: 10, // 최대 10분
+        checkinMargin: 5,
+        maxRuntime: 10,
         timezone: "Asia/Seoul",
       }
     );
 
-    // Breadcrumb으로 로그 (쿼터 안 먹음!)
     Sentry.addBreadcrumb({
       category: "cron",
       message: "크론잡 실행 시작",
@@ -177,7 +174,6 @@ const job = schedule.scheduleJob(
         duration: `${duration}s`,
       });
 
-      // 에러만 Sentry로 전송 (위의 Breadcrumb들이 자동으로 함께 전송됨)
       Sentry.captureException(error, {
         level: "error",
         tags: {
@@ -202,7 +198,6 @@ const job = schedule.scheduleJob(
         status: "error",
       });
 
-      // 에러 전송 완료 대기
       await Sentry.flush(2000);
     }
   }
@@ -228,3 +223,43 @@ const gracefulShutdown = async (signal) => {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// 수동 실행 모드
+async function executeManually() {
+  const executionId = Date.now();
+  const startTime = new Date();
+
+  console.log("🔧 매뉴얼 날씨 데이터 수집 시작...");
+  console.log(`[${startTime.toISOString()}] Execution ID: ${executionId}`);
+
+  try {
+    console.log("Step 1: Processing weather data...");
+    await processDataAndWriteToFile(CAPITAL_LOCATION, minute);
+
+    console.log("Step 2: Merging objects and stats...");
+    await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
+
+    console.log("Step 3: Writing total POP data...");
+    await writeTotalPOPDataToFile("totalOfAllArea", "POPstats", CAPITAL_LOCATION);
+
+    console.log("Step 4: Inserting weather data to DB...");
+    await getWeatherDataInsertToDB(CAPITAL_LOCATION);
+
+    const endTime = new Date();
+    const duration = (endTime - startTime) / 1000;
+
+    console.log(`✅ 매뉴얼 실행 완료! (${duration}s)`);
+    return { success: true, duration };
+  } catch (error) {
+    console.error("❌ 매뉴얼 실행 실패:", error.message);
+    throw error;
+  }
+}
+
+if (process.argv.includes("--manual")) {
+  executeManually()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}
+
+module.exports = { executeManually };

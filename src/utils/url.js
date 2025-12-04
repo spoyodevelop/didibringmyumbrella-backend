@@ -1,15 +1,7 @@
-const {
-  getPastFormattedHour,
-  getCurrentBaseDate,
-  baseTimes,
-} = require("./dateFormatting");
-const { DUMMY_CAPITAL } = require("./locations");
+const { getPastFormattedHour, getCurrentBaseDate } = require("./time");
+
 process.env.TZ = "Asia/Seoul";
 const KOREA_METEOROLOGICAL_API_KEY = process.env.KOREA_METEOROLOGICAL_API_KEY;
-// const { KOREA_METEOROLOGICAL_API_KEY } = require("./majorKeys");
-
-//TODO 가능한 버그 => 0, 1, 2, 3분일때, 데이터베이스에 데이터가 없을수가 있다.
-//이전데이터를 불러오거나, 인터벌을 땡기자.
 
 function getTimeObj(usage, dataType) {
   let year, month, day, hour, minute;
@@ -21,11 +13,11 @@ function getTimeObj(usage, dataType) {
       new Date(Date.now())
     ));
   }
+
   return { usage, dataType, year, month, day, hour, minute };
 }
 
 function getUrl(locationObj, timeObj) {
-  let url;
   const { usage } = timeObj;
 
   let capitalNX, capitalNY, convertedX, convertedY;
@@ -38,6 +30,7 @@ function getUrl(locationObj, timeObj) {
 
   const { dataType, year, month, day, hour, minute } = timeObj;
 
+  let url;
   if (dataType === "pastData") {
     url = `https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst?authKey=${KOREA_METEOROLOGICAL_API_KEY}&numOfRows=10&pageNo=1&base_date=${year}${month}${day}&base_time=${hour}${minute}&nx=${
       convertedX ? convertedX : capitalNX
@@ -50,12 +43,9 @@ function getUrl(locationObj, timeObj) {
 
   return url;
 }
-// DUMMY_CAPITAL.forEach((capital) => {
-//   const time = getTimeObj("DB", "currentData");
-//   console.log(getUrl(capital, time));
-// });
 
 module.exports = {
   getTimeObj,
   getUrl,
 };
+

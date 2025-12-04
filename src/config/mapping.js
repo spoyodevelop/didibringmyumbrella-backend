@@ -1,8 +1,8 @@
-const { dfs_xy_conv } = require("./positionFormatting");
+const { dfs_xy_conv } = require("../utils/position");
+const { CAPITAL_LOCATION } = require("./locations");
 require("dotenv").config();
+
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-// const { GOOGLE_API_KEY } = require("./majorKeys");
-const { DUMMY_POSITION, CAPITAL_LOCATION } = require("./locations");
 const axios = require("axios");
 const axiosRetry = require("axios-retry").default;
 
@@ -50,7 +50,7 @@ async function positionToLocation(location) {
     };
   } catch (error) {
     console.error("Error in positionToLocation:", error);
-    throw error; // Pass the error to the caller
+    throw error;
   }
 }
 
@@ -76,10 +76,11 @@ async function fetchClientLocationData(position) {
     return mergedLocationsData;
   } catch (error) {
     console.error("Error in fetchLocationsData:", error);
-    throw error; // Pass the error to the caller
+    throw error;
   }
 }
 
 module.exports = {
   fetchClientLocationData,
 };
+
