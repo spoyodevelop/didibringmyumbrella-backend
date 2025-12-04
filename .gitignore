@@ -46,6 +46,10 @@ logs
 *.log
 lerna-debug.log*
 
+# PM2
+.pm2
+pids
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 

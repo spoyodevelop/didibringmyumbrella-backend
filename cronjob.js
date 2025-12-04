@@ -18,9 +18,24 @@ const {
 } = require("./getWeatherDataAndInsertToDB.js");
 const { writeTotalPOPDataToFile } = require("./getTotalPOPdata.js");
 
+const minute = 15;
+
 console.log("starting job....");
 
-const minute = 15;
+// 🚀 서비스 시작 알림
+Sentry.captureMessage("✅ Weather Cron Service Started", {
+  level: "info",
+  tags: {
+    service: "weather-cron",
+    event: "startup",
+  },
+  extra: {
+    startedAt: new Date().toISOString(),
+    schedule: `${minute} 3,6,9,12,15,18,21,0 * * *`,
+    nodeVersion: process.version,
+    hostname: require("os").hostname(),
+  },
+});
 
 const job = schedule.scheduleJob(
   `${minute} 3,6,9,12,15,18,21,0 * * *`,
@@ -196,3 +211,20 @@ const job = schedule.scheduleJob(
 console.log(
   `✅ Cron job scheduled: ${minute} minutes past 3,6,9,12,15,18,21,0 hours`
 );
+
+const gracefulShutdown = async (signal) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+
+  Sentry.captureMessage(`⚠️ Weather Cron Service Stopped (${signal})`, {
+    level: "warning",
+    tags: { service: "weather-cron", event: "shutdown" },
+    extra: { stoppedAt: new Date().toISOString() },
+  });
+
+  await Sentry.flush(2000);
+  job.cancel();
+  process.exit(0);
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

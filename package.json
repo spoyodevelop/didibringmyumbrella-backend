@@ -4,7 +4,13 @@
   "description": "Making stats about Probability of precipitation from korea metrorological api",
   "main": "cronjob.js",
   "scripts": {
-    "cron" : "node cronjob.js"
+    "cron": "node cronjob.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop weather-cronjob",
+    "pm2:restart": "pm2 restart weather-cronjob",
+    "pm2:logs": "pm2 logs weather-cronjob",
+    "pm2:monit": "pm2 monit",
+    "pm2:delete": "pm2 delete weather-cronjob"
   },
   "keywords": [
     "rain",
@@ -28,6 +34,6 @@
     "mongoose": "^8.3.2",
     "node-cron": "^3.0.3",
     "node-schedule": "^2.1.1",
-    "nodemailer": "^6.9.13"
+    "pm2": "^5.3.0"
   }
 }
