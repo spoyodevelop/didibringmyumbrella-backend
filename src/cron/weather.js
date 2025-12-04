@@ -20,7 +20,7 @@ const minute = 15;
 
 console.log("starting job....");
 
-// 🚀 서비스 시작 알림
+// 🚀 서비스 시작 알림 (재시작 감지 포인트!)
 Sentry.captureMessage("✅ Weather Cron Service Started", {
   level: "info",
   tags: {
@@ -32,6 +32,7 @@ Sentry.captureMessage("✅ Weather Cron Service Started", {
     schedule: `${minute} 3,6,9,12,15,18,21,0 * * *`,
     nodeVersion: process.version,
     hostname: require("os").hostname(),
+    pid: process.pid,
   },
 });
 
@@ -213,13 +214,58 @@ const gracefulShutdown = async (signal) => {
   Sentry.captureMessage(`⚠️ Weather Cron Service Stopped (${signal})`, {
     level: "warning",
     tags: { service: "weather-cron", event: "shutdown" },
-    extra: { stoppedAt: new Date().toISOString() },
+    extra: { 
+      stoppedAt: new Date().toISOString(),
+      signal,
+      pid: process.pid,
+    },
   });
 
   await Sentry.flush(2000);
   job.cancel();
   process.exit(0);
 };
+
+// 비정상 종료 감지 (Point of Failure!)
+process.on("uncaughtException", async (error) => {
+  console.error("💥 Uncaught Exception:", error);
+
+  Sentry.captureException(error, {
+    level: "fatal",
+    tags: { 
+      service: "weather-cron", 
+      event: "crash",
+      type: "uncaughtException",
+    },
+    extra: {
+      crashedAt: new Date().toISOString(),
+      pid: process.pid,
+    },
+  });
+
+  await Sentry.flush(5000);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", async (reason, promise) => {
+  console.error("💥 Unhandled Rejection:", reason);
+
+  Sentry.captureException(reason, {
+    level: "fatal",
+    tags: { 
+      service: "weather-cron", 
+      event: "crash",
+      type: "unhandledRejection",
+    },
+    extra: {
+      crashedAt: new Date().toISOString(),
+      pid: process.pid,
+    },
+  });
+
+  await Sentry.flush(5000);
+  process.exit(1);
+});
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));

@@ -24,6 +24,22 @@ const BACKUP_CONFIG = {
 
 console.log("🚀 Backup Cron Service starting...");
 
+// 🚀 서비스 시작 알림 (재시작 감지 포인트!)
+Sentry.captureMessage("✅ Backup Cron Service Started", {
+  level: "info",
+  tags: {
+    service: "backup-cron",
+    event: "startup",
+  },
+  extra: {
+    startedAt: new Date().toISOString(),
+    schedule: BACKUP_CONFIG.schedule,
+    nodeVersion: process.version,
+    hostname: require("os").hostname(),
+    pid: process.pid,
+  },
+});
+
 function getSeoulLastUpdated() {
   try {
     const seoulPath = path.join(BACKUP_CONFIG.source, "Seoul/POPstats.js");
@@ -165,9 +181,62 @@ if (process.argv.includes("--manual")) {
 
 const gracefulShutdown = async (signal) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
+
+  Sentry.captureMessage(`⚠️ Backup Cron Service Stopped (${signal})`, {
+    level: "warning",
+    tags: { service: "backup-cron", event: "shutdown" },
+    extra: { 
+      stoppedAt: new Date().toISOString(),
+      signal,
+      pid: process.pid,
+    },
+  });
+
+  await Sentry.flush(2000);
   job.cancel();
   process.exit(0);
 };
+
+
+process.on("uncaughtException", async (error) => {
+  console.error("💥 Uncaught Exception:", error);
+
+  Sentry.captureException(error, {
+    level: "fatal",
+    tags: { 
+      service: "backup-cron", 
+      event: "crash",
+      type: "uncaughtException",
+    },
+    extra: {
+      crashedAt: new Date().toISOString(),
+      pid: process.pid,
+    },
+  });
+
+  await Sentry.flush(5000);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", async (reason, promise) => {
+  console.error("💥 Unhandled Rejection:", reason);
+
+  Sentry.captureException(reason, {
+    level: "fatal",
+    tags: { 
+      service: "backup-cron", 
+      event: "crash",
+      type: "unhandledRejection",
+    },
+    extra: {
+      crashedAt: new Date().toISOString(),
+      pid: process.pid,
+    },
+  });
+
+  await Sentry.flush(5000);
+  process.exit(1);
+});
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
