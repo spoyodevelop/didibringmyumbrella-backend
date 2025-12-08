@@ -1,41 +1,30 @@
 const schedule = require("node-schedule");
-const Sentry = require("@sentry/node");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const path = require("path");
-require("dotenv").config();
+
+const { Sentry, initCronService } = require("../utils/sentry");
+const { CRON, SENTRY, BACKUP, TIMEOUTS } = require("../config/constants");
 
 const execAsync = promisify(exec);
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV || "production",
-  tracesSampleRate: 0,
-  maxBreadcrumbs: 30,
-});
-
 const BACKUP_CONFIG = {
   source: path.join(__dirname, "../../data/"),
-  destination: "spoyodrive:WeatherData/",
-  schedule: "30 0 * * *", // 매일 0시 30분
+  destination: BACKUP.DESTINATION,
+  schedule: CRON.BACKUP.SCHEDULE,
 };
 
-console.log("🚀 Backup Cron Service starting...");
+let job;
 
-Sentry.captureMessage("✅ Backup Cron Service Started", {
-  level: "info",
-  tags: {
-    service: "backup-cron",
-    event: "startup",
-  },
-  extra: {
-    startedAt: new Date().toISOString(),
-    schedule: BACKUP_CONFIG.schedule,
-    nodeVersion: process.version,
-    hostname: require("os").hostname(),
-    pid: process.pid,
-  },
+const { gracefulShutdown } = initCronService({
+  serviceName: SENTRY.BACKUP.SERVICE_NAME,
+  tracesSampleRate: SENTRY.BACKUP.TRACES_SAMPLE_RATE,
+  maxBreadcrumbs: SENTRY.BACKUP.MAX_BREADCRUMBS,
+  extraStartInfo: { schedule: BACKUP_CONFIG.schedule },
+  onShutdown: () => job?.cancel(),
 });
+
+console.log("🚀 Backup Cron Service starting...");
 
 function getSeoulLastUpdated() {
   try {
@@ -74,7 +63,7 @@ async function runBackup() {
   console.log(`📦 Executing: ${command}`);
 
   const { stdout, stderr } = await execAsync(command, {
-    timeout: 10 * 60 * 1000, // 10분 타임아웃
+    timeout: TIMEOUTS.BACKUP,
   });
 
   if (stdout) console.log("stdout:", stdout);
@@ -113,7 +102,7 @@ async function executeBackup(isManual = false) {
     Sentry.captureMessage(`✅ Backup Success`, {
       level: "info",
       tags: {
-        service: "backup-cron",
+        service: SENTRY.BACKUP.SERVICE_NAME,
         trigger: triggerType,
       },
       extra: {
@@ -126,7 +115,7 @@ async function executeBackup(isManual = false) {
       },
     });
 
-    await Sentry.flush(2000);
+    await Sentry.flush(TIMEOUTS.SENTRY_FLUSH);
   } catch (error) {
     const endTime = new Date();
     const duration = (endTime - startTime) / 1000;
@@ -136,7 +125,7 @@ async function executeBackup(isManual = false) {
     Sentry.captureException(error, {
       level: "error",
       tags: {
-        service: "backup-cron",
+        service: SENTRY.BACKUP.SERVICE_NAME,
         trigger: triggerType,
         executionId: executionId.toString(),
       },
@@ -152,12 +141,12 @@ async function executeBackup(isManual = false) {
       },
     });
 
-    await Sentry.flush(2000);
+    await Sentry.flush(TIMEOUTS.SENTRY_FLUSH);
     throw error;
   }
 }
 
-const job = schedule.scheduleJob(BACKUP_CONFIG.schedule, async function () {
+job = schedule.scheduleJob(BACKUP_CONFIG.schedule, async function () {
   await executeBackup(false);
 });
 
@@ -177,64 +166,3 @@ if (process.argv.includes("--manual")) {
       process.exit(1);
     });
 }
-
-const gracefulShutdown = async (signal) => {
-  console.log(`\n${signal} received. Shutting down gracefully...`);
-
-  Sentry.captureMessage(`⚠️ Backup Cron Service Stopped (${signal})`, {
-    level: "warning",
-    tags: { service: "backup-cron", event: "shutdown" },
-    extra: {
-      stoppedAt: new Date().toISOString(),
-      signal,
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(2000);
-  job.cancel();
-  process.exit(0);
-};
-
-process.on("uncaughtException", async (error) => {
-  console.error("💥 Uncaught Exception:", error);
-
-  Sentry.captureException(error, {
-    level: "fatal",
-    tags: {
-      service: "backup-cron",
-      event: "crash",
-      type: "uncaughtException",
-    },
-    extra: {
-      crashedAt: new Date().toISOString(),
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(5000);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", async (reason, promise) => {
-  console.error("💥 Unhandled Rejection:", reason);
-
-  Sentry.captureException(reason, {
-    level: "fatal",
-    tags: {
-      service: "backup-cron",
-      event: "crash",
-      type: "unhandledRejection",
-    },
-    extra: {
-      crashedAt: new Date().toISOString(),
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(5000);
-  process.exit(1);
-});
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));

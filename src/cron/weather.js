@@ -1,270 +1,187 @@
 const schedule = require("node-schedule");
-const Sentry = require("@sentry/node");
-require("dotenv").config();
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV || "production",
-  tracesSampleRate: 0.1,
-  maxBreadcrumbs: 50,
-});
-
+const { Sentry, initCronService } = require("../utils/sentry");
 const { CAPITAL_LOCATION } = require("../config/locations");
+const { CRON, SENTRY, TIMEZONE, DATA_FILES } = require("../config/constants");
 const { processDataAndWriteToFile } = require("../services/weather/process");
 const { getAllMergedObjAndSaveFile } = require("../services/stats/merged");
 const { getWeatherDataInsertToDB } = require("../services/weather/db");
 const { writeTotalPOPDataToFile } = require("../services/stats/total");
 
-const minute = 15;
+let job;
+
+const { gracefulShutdown } = initCronService({
+  serviceName: SENTRY.WEATHER.SERVICE_NAME,
+  tracesSampleRate: SENTRY.WEATHER.TRACES_SAMPLE_RATE,
+  maxBreadcrumbs: SENTRY.WEATHER.MAX_BREADCRUMBS,
+  extraStartInfo: { schedule: CRON.WEATHER.SCHEDULE },
+  onShutdown: () => job?.cancel(),
+});
 
 console.log("starting job....");
 
-Sentry.captureMessage("✅ Weather Cron Service Started", {
-  level: "info",
-  tags: {
-    service: "weather-cron",
-    event: "startup",
+const WEATHER_STEPS = [
+  {
+    name: "Processing weather data",
+    nameKo: "날씨 데이터 처리",
+    fn: () => processDataAndWriteToFile(CAPITAL_LOCATION, CRON.WEATHER.MINUTE),
   },
-  extra: {
-    startedAt: new Date().toISOString(),
-    schedule: `${minute} 3,6,9,12,15,18,21,0 * * *`,
-    nodeVersion: process.version,
-    hostname: require("os").hostname(),
-    pid: process.pid,
+  {
+    name: "Merging objects and stats",
+    nameKo: "객체 병합 및 통계 저장",
+    fn: () => getAllMergedObjAndSaveFile(CAPITAL_LOCATION),
   },
-});
+  {
+    name: "Writing total POP data",
+    nameKo: "전체 POP 데이터 저장",
+    fn: () =>
+      writeTotalPOPDataToFile(
+        DATA_FILES.TOTAL_AREA,
+        DATA_FILES.POP_STATS,
+        CAPITAL_LOCATION
+      ),
+  },
+  {
+    name: "Inserting weather data to DB",
+    nameKo: "DB 삽입",
+    fn: () => getWeatherDataInsertToDB(CAPITAL_LOCATION),
+  },
+];
 
-const job = schedule.scheduleJob(
-  `${minute} 3,6,9,12,15,18,21,0 * * *`,
-  async function () {
-    const executionId = Date.now();
-    const startTime = new Date();
-    const monitorSlug = "weather-cron-job";
+/**
+ * 날씨 데이터 수집 및 처리
+ * @param {Object} options
+ * @param {boolean} [options.withBreadcrumbs=false]
+ */
+async function executeWeatherSteps({ withBreadcrumbs = false } = {}) {
+  for (const [i, { name, nameKo, fn }] of WEATHER_STEPS.entries()) {
+    const stepNum = i + 1;
 
-    console.log(
-      `[${startTime.toISOString()}] Cron job execution started (ID: ${executionId})`
-    );
+    console.log(`Step ${stepNum}: ${name}...`);
 
-    const checkInId = Sentry.captureCheckIn(
-      {
-        monitorSlug: monitorSlug,
-        status: "in_progress",
+    if (withBreadcrumbs) {
+      Sentry.addBreadcrumb({
+        category: "cron.step",
+        message: `Step ${stepNum}: ${nameKo} 시작`,
+        level: "info",
+      });
+    }
+
+    await fn();
+
+    if (withBreadcrumbs) {
+      Sentry.addBreadcrumb({
+        category: "cron.step",
+        message: `Step ${stepNum}: ${nameKo} 완료`,
+        level: "info",
+      });
+    }
+  }
+}
+
+job = schedule.scheduleJob(CRON.WEATHER.SCHEDULE, async function () {
+  const executionId = Date.now();
+  const startTime = new Date();
+
+  console.log(
+    `[${startTime.toISOString()}] Cron job execution started (ID: ${executionId})`
+  );
+
+  const checkInId = Sentry.captureCheckIn(
+    {
+      monitorSlug: SENTRY.WEATHER.MONITOR_SLUG,
+      status: "in_progress",
+    },
+    {
+      schedule: {
+        type: "crontab",
+        value: CRON.WEATHER.SCHEDULE,
       },
-      {
-        schedule: {
-          type: "crontab",
-          value: `${minute} 3,6,9,12,15,18,21,0 * * *`,
-        },
-        checkinMargin: 5,
-        maxRuntime: 10,
-        timezone: "Asia/Seoul",
-      }
+      checkinMargin: SENTRY.WEATHER.CHECKIN_MARGIN,
+      maxRuntime: SENTRY.WEATHER.MAX_RUNTIME,
+      timezone: TIMEZONE,
+    }
+  );
+
+  Sentry.addBreadcrumb({
+    category: "cron",
+    message: "크론잡 실행 시작",
+    level: "info",
+    data: {
+      executionId: executionId.toString(),
+      startTime: startTime.toISOString(),
+      checkInId,
+    },
+  });
+
+  try {
+    await executeWeatherSteps({ withBreadcrumbs: true });
+
+    const endTime = new Date();
+    const duration = (endTime - startTime) / 1000;
+    console.log(
+      `[${endTime.toLocaleDateString(
+        "ko-KR"
+      )}] Cron job completed successfully (${duration}s)`
     );
 
     Sentry.addBreadcrumb({
       category: "cron",
-      message: "크론잡 실행 시작",
+      message: "크론잡 정상 완료",
       level: "info",
       data: {
-        executionId: executionId.toString(),
-        startTime: startTime.toISOString(),
-        checkInId,
+        duration: `${duration}s`,
+        endTime: endTime.toISOString(),
       },
     });
 
-    try {
-      console.log("Step 1: Processing weather data...");
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 1: 날씨 데이터 처리 시작",
-        level: "info",
-      });
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: SENTRY.WEATHER.MONITOR_SLUG,
+      status: "ok",
+    });
+  } catch (error) {
+    const endTime = new Date();
+    const duration = (endTime - startTime) / 1000;
 
-      await processDataAndWriteToFile(CAPITAL_LOCATION, minute);
+    console.error("❌ Error processing weather data:", error);
+    console.error("Error details:", {
+      message: error.message,
+      executionId,
+      duration: `${duration}s`,
+    });
 
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 1: 날씨 데이터 처리 완료",
-        level: "info",
-      });
-
-      console.log("Step 2: Merging objects and stats...");
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 2: 객체 병합 및 통계 저장 시작",
-        level: "info",
-      });
-
-      await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
-
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 2: 객체 병합 및 통계 저장 완료",
-        level: "info",
-      });
-
-      console.log("Step 3: Writing total POP data...");
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 3: 전체 POP 데이터 저장 시작",
-        level: "info",
-      });
-
-      await writeTotalPOPDataToFile(
-        "totalOfAllArea",
-        "POPstats",
-        CAPITAL_LOCATION
-      );
-
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 3: 전체 POP 데이터 저장 완료",
-        level: "info",
-      });
-
-      console.log("Step 4: Inserting weather data to DB...");
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 4: DB 삽입 시작",
-        level: "info",
-      });
-
-      await getWeatherDataInsertToDB(CAPITAL_LOCATION);
-
-      Sentry.addBreadcrumb({
-        category: "cron.step",
-        message: "Step 4: DB 삽입 완료",
-        level: "info",
-      });
-
-      const endTime = new Date();
-      const duration = (endTime - startTime) / 1000;
-      console.log(
-        `[${endTime.toLocaleDateString(
-          "ko-KR"
-        )}] Cron job completed successfully (${duration}s)`
-      );
-
-      Sentry.addBreadcrumb({
-        category: "cron",
-        message: "크론잡 정상 완료",
-        level: "info",
-        data: {
-          duration: `${duration}s`,
-          endTime: endTime.toISOString(),
-        },
-      });
-
-      Sentry.captureCheckIn({
-        checkInId,
-        monitorSlug: monitorSlug,
-        status: "ok",
-      });
-    } catch (error) {
-      const endTime = new Date();
-      const duration = (endTime - startTime) / 1000;
-
-      console.error("❌ Error processing weather data:", error);
-      console.error("Error details:", {
-        message: error.message,
-        executionId,
+    Sentry.captureException(error, {
+      level: "error",
+      tags: {
+        service: SENTRY.WEATHER.SERVICE_NAME,
+        executionId: executionId.toString(),
+        minute: CRON.WEATHER.MINUTE.toString(),
+      },
+      extra: {
+        location: "CAPITAL_LOCATION",
+        timestamp: new Date().toISOString(),
+        startTime: startTime.toISOString(),
         duration: `${duration}s`,
-      });
+        errorMessage: error.message,
+        errorStack: error.stack,
+      },
+    });
 
-      Sentry.captureException(error, {
-        level: "error",
-        tags: {
-          service: "weather-cron",
-          executionId: executionId.toString(),
-          minute: minute.toString(),
-        },
-        extra: {
-          location: "CAPITAL_LOCATION",
-          timestamp: new Date().toISOString(),
-          startTime: startTime.toISOString(),
-          duration: `${duration}s`,
-          errorMessage: error.message,
-          errorStack: error.stack,
-        },
-      });
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: SENTRY.WEATHER.MONITOR_SLUG,
+      status: "error",
+    });
 
-      Sentry.captureCheckIn({
-        checkInId,
-        monitorSlug: monitorSlug,
-        status: "error",
-      });
-
-      await Sentry.flush(2000);
-    }
+    await Sentry.flush(2000);
   }
-);
+});
 
 console.log(
-  `✅ Cron job scheduled: ${minute} minutes past 3,6,9,12,15,18,21,0 hours`
+  `✅ Cron job scheduled: ${CRON.WEATHER.MINUTE} minutes past ${CRON.WEATHER.HOURS} hours`
 );
 
-const gracefulShutdown = async (signal) => {
-  console.log(`\n${signal} received. Shutting down gracefully...`);
-
-  Sentry.captureMessage(`⚠️ Weather Cron Service Stopped (${signal})`, {
-    level: "warning",
-    tags: { service: "weather-cron", event: "shutdown" },
-    extra: {
-      stoppedAt: new Date().toISOString(),
-      signal,
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(2000);
-  job.cancel();
-  process.exit(0);
-};
-
-process.on("uncaughtException", async (error) => {
-  console.error("💥 Uncaught Exception:", error);
-
-  Sentry.captureException(error, {
-    level: "fatal",
-    tags: {
-      service: "weather-cron",
-      event: "crash",
-      type: "uncaughtException",
-    },
-    extra: {
-      crashedAt: new Date().toISOString(),
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(5000);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", async (reason, promise) => {
-  console.error("💥 Unhandled Rejection:", reason);
-
-  Sentry.captureException(reason, {
-    level: "fatal",
-    tags: {
-      service: "weather-cron",
-      event: "crash",
-      type: "unhandledRejection",
-    },
-    extra: {
-      crashedAt: new Date().toISOString(),
-      pid: process.pid,
-    },
-  });
-
-  await Sentry.flush(5000);
-  process.exit(1);
-});
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
-// 수동 실행 모드
 async function executeManually() {
   const executionId = Date.now();
   const startTime = new Date();
@@ -273,21 +190,7 @@ async function executeManually() {
   console.log(`[${startTime.toISOString()}] Execution ID: ${executionId}`);
 
   try {
-    console.log("Step 1: Processing weather data...");
-    await processDataAndWriteToFile(CAPITAL_LOCATION, minute);
-
-    console.log("Step 2: Merging objects and stats...");
-    await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
-
-    console.log("Step 3: Writing total POP data...");
-    await writeTotalPOPDataToFile(
-      "totalOfAllArea",
-      "POPstats",
-      CAPITAL_LOCATION
-    );
-
-    console.log("Step 4: Inserting weather data to DB...");
-    await getWeatherDataInsertToDB(CAPITAL_LOCATION);
+    await executeWeatherSteps({ withBreadcrumbs: false });
 
     const endTime = new Date();
     const duration = (endTime - startTime) / 1000;
