@@ -11,6 +11,7 @@ const {
   captureError,
   captureSuccess,
 } = require("../utils/monitoring");
+const { formatKoreanDate } = require("../utils/time");
 
 const execAsync = promisify(exec);
 
@@ -56,7 +57,7 @@ async function collectBackupMetadata() {
   const sizeMB = await getFolderSize();
 
   console.log(
-    `📊 Seoul lastUpdated: ${seoulMeta?.lastUpdatedSince || "unknown"}`
+    `📊 Seoul lastUpdated: ${formatKoreanDate(seoulMeta?.lastUpdatedSince)}`
   );
   console.log(`📦 Data size: ${sizeMB}MB`);
 
@@ -135,19 +136,23 @@ async function executeBackup(isManual = false) {
   }
 }
 
-let job;
+let cleanup = () => {};
 
 const { gracefulShutdown } = initCronService({
   serviceName: SENTRY.BACKUP.SERVICE_NAME,
   tracesSampleRate: SENTRY.BACKUP.TRACES_SAMPLE_RATE,
   maxBreadcrumbs: SENTRY.BACKUP.MAX_BREADCRUMBS,
   extraStartInfo: { schedule: BACKUP_CONFIG.schedule },
-  onShutdown: () => job?.cancel(),
+  onShutdown: () => cleanup(),
 });
 
 console.log("🚀 Backup Cron Service starting...");
 
-job = schedule.scheduleJob(BACKUP_CONFIG.schedule, () => executeBackup(false));
+const job = schedule.scheduleJob(BACKUP_CONFIG.schedule, () =>
+  executeBackup(false)
+);
+
+cleanup = () => job.cancel();
 
 console.log(`✅ Backup job scheduled: ${BACKUP_CONFIG.schedule} (Asia/Seoul)`);
 console.log(`   Source: ${BACKUP_CONFIG.source}`);

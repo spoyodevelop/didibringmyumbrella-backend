@@ -48,19 +48,19 @@ function createMonitoredCronJob({
   extraTags = {},
   extraData = {},
 }) {
-  let job;
+  let cleanup = () => {};
 
   const { gracefulShutdown } = initCronService({
     serviceName: monitor.SERVICE_NAME,
     tracesSampleRate: monitor.TRACES_SAMPLE_RATE,
     maxBreadcrumbs: monitor.MAX_BREADCRUMBS,
     extraStartInfo: { schedule: cronSchedule.SCHEDULE },
-    onShutdown: () => job?.cancel(),
+    onShutdown: () => cleanup(),
   });
 
   console.log("starting job....");
 
-  job = schedule.scheduleJob(cronSchedule.SCHEDULE, () =>
+  const job = schedule.scheduleJob(cronSchedule.SCHEDULE, () =>
     withCronMonitoring({
       monitor,
       cronSchedule: cronSchedule.SCHEDULE,
@@ -73,15 +73,14 @@ function createMonitoredCronJob({
     })
   );
 
+  cleanup = () => job.cancel();
+
   console.log(
     `✅ Cron job scheduled: ${cronSchedule.MINUTE || ""} minutes past ${
       cronSchedule.HOURS || ""
     } hours`.trim()
   );
 
-  /**
-   * 매뉴얼 실행 (breadcrumb 없이)
-   */
   async function executeManually() {
     const { executionId, startTime } = createExecutionContext();
 

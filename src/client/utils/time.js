@@ -98,6 +98,17 @@ function generateDummyTimeArray(startHour = 22, endHour = 23) {
 
   return timeArray;
 }
+function formatKoreanDate(isoString) {
+  if (!isoString) return "unknown";
+  return new Date(isoString).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 module.exports = {
   baseTimes,
@@ -105,5 +116,5 @@ module.exports = {
   getClosestBaseTime,
   determineBaseTime,
   generateDummyTimeArray,
+  formatKoreanDate,
 };
-
