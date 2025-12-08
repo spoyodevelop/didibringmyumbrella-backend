@@ -7,7 +7,6 @@ require("dotenv").config();
 
 const execAsync = promisify(exec);
 
-// Sentry 초기화
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || "production",
@@ -15,7 +14,6 @@ Sentry.init({
   maxBreadcrumbs: 30,
 });
 
-// 설정
 const BACKUP_CONFIG = {
   source: path.join(__dirname, "../../data/"),
   destination: "spoyodrive:WeatherData/",
@@ -24,7 +22,6 @@ const BACKUP_CONFIG = {
 
 console.log("🚀 Backup Cron Service starting...");
 
-// 🚀 서비스 시작 알림 (재시작 감지 포인트!)
 Sentry.captureMessage("✅ Backup Cron Service Started", {
   level: "info",
   tags: {
@@ -98,7 +95,9 @@ async function executeBackup(isManual = false) {
   const seoulMeta = getSeoulLastUpdated();
   const sizeMB = await getFolderSize();
 
-  console.log(`📊 Seoul lastUpdated: ${seoulMeta?.lastUpdatedSince || "unknown"}`);
+  console.log(
+    `📊 Seoul lastUpdated: ${seoulMeta?.lastUpdatedSince || "unknown"}`
+  );
   console.log(`📦 Data size: ${sizeMB}MB`);
 
   try {
@@ -185,7 +184,7 @@ const gracefulShutdown = async (signal) => {
   Sentry.captureMessage(`⚠️ Backup Cron Service Stopped (${signal})`, {
     level: "warning",
     tags: { service: "backup-cron", event: "shutdown" },
-    extra: { 
+    extra: {
       stoppedAt: new Date().toISOString(),
       signal,
       pid: process.pid,
@@ -197,14 +196,13 @@ const gracefulShutdown = async (signal) => {
   process.exit(0);
 };
 
-
 process.on("uncaughtException", async (error) => {
   console.error("💥 Uncaught Exception:", error);
 
   Sentry.captureException(error, {
     level: "fatal",
-    tags: { 
-      service: "backup-cron", 
+    tags: {
+      service: "backup-cron",
       event: "crash",
       type: "uncaughtException",
     },
@@ -223,8 +221,8 @@ process.on("unhandledRejection", async (reason, promise) => {
 
   Sentry.captureException(reason, {
     level: "fatal",
-    tags: { 
-      service: "backup-cron", 
+    tags: {
+      service: "backup-cron",
       event: "crash",
       type: "unhandledRejection",
     },
@@ -240,4 +238,3 @@ process.on("unhandledRejection", async (reason, promise) => {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-

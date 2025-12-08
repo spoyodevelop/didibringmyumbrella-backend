@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const MONGODB_USERNAME = process.env.MONGODB_USERNAME;
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD;
 
-// data 폴더 경로 (프로젝트 루트 기준)
 const DATA_DIR = path.join(__dirname, "../../../data");
 
 const weatherSchema = new mongoose.Schema({
@@ -85,11 +84,11 @@ async function getWeatherDataInsertToDB(capitals) {
       console.log("Connected to MongoDB for", dest);
 
       const filePath = path.join(DATA_DIR, dest, "POPstats.js");
-      
+
       // Clear require cache
       delete require.cache[require.resolve(filePath)];
       const weatherData = require(filePath);
-      
+
       const uploadingData =
         weatherData.POPstats[weatherData.POPstats.length - 1];
       await uploadWeatherData(uploadingData, dest);
@@ -97,11 +96,11 @@ async function getWeatherDataInsertToDB(capitals) {
     }
 
     const totalFilePath = path.join(DATA_DIR, "totalOfAllArea", "POPstats.js");
-    
+
     // Clear require cache
     delete require.cache[require.resolve(totalFilePath)];
     const totalData = require(totalFilePath);
-    
+
     const uploadingTotalData =
       totalData.POPstats[totalData.POPstats.length - 1];
 
@@ -154,4 +153,3 @@ module.exports = {
   getWeatherDataInsertToDB,
   uploadWeatherData,
 };
-

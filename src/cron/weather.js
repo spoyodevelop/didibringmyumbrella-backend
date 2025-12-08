@@ -2,7 +2,6 @@ const schedule = require("node-schedule");
 const Sentry = require("@sentry/node");
 require("dotenv").config();
 
-// Sentry 초기화
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || "production",
@@ -20,7 +19,6 @@ const minute = 15;
 
 console.log("starting job....");
 
-// 🚀 서비스 시작 알림 (재시작 감지 포인트!)
 Sentry.captureMessage("✅ Weather Cron Service Started", {
   level: "info",
   tags: {
@@ -47,7 +45,6 @@ const job = schedule.scheduleJob(
       `[${startTime.toISOString()}] Cron job execution started (ID: ${executionId})`
     );
 
-    // Sentry Cron Monitor 시작 체크인
     const checkInId = Sentry.captureCheckIn(
       {
         monitorSlug: monitorSlug,
@@ -158,7 +155,6 @@ const job = schedule.scheduleJob(
         },
       });
 
-      // Sentry Cron Monitor 성공 체크인
       Sentry.captureCheckIn({
         checkInId,
         monitorSlug: monitorSlug,
@@ -192,7 +188,6 @@ const job = schedule.scheduleJob(
         },
       });
 
-      // Sentry Cron Monitor 실패 체크인
       Sentry.captureCheckIn({
         checkInId,
         monitorSlug: monitorSlug,
@@ -214,7 +209,7 @@ const gracefulShutdown = async (signal) => {
   Sentry.captureMessage(`⚠️ Weather Cron Service Stopped (${signal})`, {
     level: "warning",
     tags: { service: "weather-cron", event: "shutdown" },
-    extra: { 
+    extra: {
       stoppedAt: new Date().toISOString(),
       signal,
       pid: process.pid,
@@ -226,14 +221,13 @@ const gracefulShutdown = async (signal) => {
   process.exit(0);
 };
 
-// 비정상 종료 감지 (Point of Failure!)
 process.on("uncaughtException", async (error) => {
   console.error("💥 Uncaught Exception:", error);
 
   Sentry.captureException(error, {
     level: "fatal",
-    tags: { 
-      service: "weather-cron", 
+    tags: {
+      service: "weather-cron",
       event: "crash",
       type: "uncaughtException",
     },
@@ -252,8 +246,8 @@ process.on("unhandledRejection", async (reason, promise) => {
 
   Sentry.captureException(reason, {
     level: "fatal",
-    tags: { 
-      service: "weather-cron", 
+    tags: {
+      service: "weather-cron",
       event: "crash",
       type: "unhandledRejection",
     },
@@ -286,7 +280,11 @@ async function executeManually() {
     await getAllMergedObjAndSaveFile(CAPITAL_LOCATION);
 
     console.log("Step 3: Writing total POP data...");
-    await writeTotalPOPDataToFile("totalOfAllArea", "POPstats", CAPITAL_LOCATION);
+    await writeTotalPOPDataToFile(
+      "totalOfAllArea",
+      "POPstats",
+      CAPITAL_LOCATION
+    );
 
     console.log("Step 4: Inserting weather data to DB...");
     await getWeatherDataInsertToDB(CAPITAL_LOCATION);

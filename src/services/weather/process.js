@@ -3,7 +3,6 @@ const path = require("path");
 const { JSDateToConvertedDate } = require("../../utils/time");
 const { fetchWeatherDataWithRetry } = require("./fetch");
 
-// data 폴더 경로 (프로젝트 루트 기준)
 const DATA_DIR = path.join(__dirname, "../../../data");
 
 async function processWeatherData(CAPITALS, fetchingMinute) {
@@ -93,7 +92,7 @@ async function processWeatherData(CAPITALS, fetchingMinute) {
 async function writeDataToFile(data, destination, fileName) {
   try {
     const filePath = path.join(DATA_DIR, destination, `${fileName}.js`);
-    
+
     // Clear require cache to get fresh data
     delete require.cache[require.resolve(filePath)];
     const existingData = require(filePath);
@@ -129,4 +128,3 @@ async function processDataAndWriteToFile(capital, fetchingMinutes) {
 }
 
 module.exports = { processDataAndWriteToFile };
-
