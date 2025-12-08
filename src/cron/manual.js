@@ -1,37 +1,44 @@
 const { executeManually: executeWeather } = require("./weather");
+const { executeBackup } = require("./backup");
 
-async function executeBackup() {
-  const { exec } = require("child_process");
-  const { promisify } = require("util");
-  const execAsync = promisify(exec);
-  const path = require("path");
+// 태스크 선언 - "무엇을" 실행할지만 표현
+const MANUAL_TASKS = [
+  {
+    name: "날씨 데이터 수집",
+    emoji: "📊",
+    execute: executeWeather,
+    skipWhen: "--backup-only",
+  },
+  {
+    name: "백업",
+    emoji: "📦",
+    execute: () => executeBackup(true),
+    skipWhen: "--weather-only",
+  },
+];
 
-  const backupScript = path.join(__dirname, "backup.js");
+function shouldSkip(task, args) {
+  return args.includes(task.skipWhen);
+}
 
-  console.log("\n📦 백업 스크립트 실행 중...");
+function getTasksToRun(tasks, args) {
+  return tasks.filter((task) => !shouldSkip(task, args));
+}
 
-  try {
-    const { stdout, stderr } = await execAsync(
-      `node "${backupScript}" --manual`,
-      {
-        timeout: 10 * 60 * 1000,
-      }
-    );
+async function runTasks(tasks) {
+  const total = tasks.length;
 
-    if (stdout) console.log(stdout);
-    if (stderr) console.error(stderr);
-
-    return { success: true };
-  } catch (error) {
-    console.error("백업 실패:", error.message);
-    throw error;
+  for (const [i, task] of tasks.entries()) {
+    const stepNum = i + 1;
+    console.log(`${task.emoji} [${stepNum}/${total}] ${task.name} 시작...\n`);
+    await task.execute();
+    console.log();
   }
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  const weatherOnly = args.includes("--weather-only");
-  const backupOnly = args.includes("--backup-only");
+  const tasksToRun = getTasksToRun(MANUAL_TASKS, args);
 
   console.log("=".repeat(60));
   console.log("🚀 수동 실행 시작");
@@ -42,19 +49,10 @@ async function main() {
   const startTime = Date.now();
 
   try {
-    if (!backupOnly) {
-      console.log("📊 [1/2] 날씨 데이터 수집 시작...\n");
-      await executeWeather();
-      console.log();
-    }
-    if (!weatherOnly) {
-      console.log("📦 [2/2] 백업 시작...\n");
-      await executeBackup();
-    }
+    await runTasks(tasksToRun);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-    console.log();
     console.log("=".repeat(60));
     console.log(`✅ 전체 완료! (총 ${duration}초)`);
     console.log("=".repeat(60));

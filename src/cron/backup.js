@@ -5,6 +5,12 @@ const path = require("path");
 
 const { Sentry, initCronService } = require("../utils/sentry");
 const { CRON, SENTRY, BACKUP, TIMEOUTS } = require("../config/constants");
+const {
+  createExecutionContext,
+  getDuration,
+  captureError,
+  captureSuccess,
+} = require("../utils/monitoring");
 
 const execAsync = promisify(exec);
 
@@ -13,18 +19,6 @@ const BACKUP_CONFIG = {
   destination: BACKUP.DESTINATION,
   schedule: CRON.BACKUP.SCHEDULE,
 };
-
-let job;
-
-const { gracefulShutdown } = initCronService({
-  serviceName: SENTRY.BACKUP.SERVICE_NAME,
-  tracesSampleRate: SENTRY.BACKUP.TRACES_SAMPLE_RATE,
-  maxBreadcrumbs: SENTRY.BACKUP.MAX_BREADCRUMBS,
-  extraStartInfo: { schedule: BACKUP_CONFIG.schedule },
-  onShutdown: () => job?.cancel(),
-});
-
-console.log("🚀 Backup Cron Service starting...");
 
 function getSeoulLastUpdated() {
   try {
@@ -57,7 +51,19 @@ async function getFolderSize() {
   }
 }
 
-async function runBackup() {
+async function collectBackupMetadata() {
+  const seoulMeta = getSeoulLastUpdated();
+  const sizeMB = await getFolderSize();
+
+  console.log(
+    `📊 Seoul lastUpdated: ${seoulMeta?.lastUpdatedSince || "unknown"}`
+  );
+  console.log(`📦 Data size: ${sizeMB}MB`);
+
+  return { seoulMeta, sizeMB };
+}
+
+async function runRcloneSync() {
   const command = `rclone sync "${BACKUP_CONFIG.source}" "${BACKUP_CONFIG.destination}" --verbose`;
 
   console.log(`📦 Executing: ${command}`);
@@ -73,69 +79,52 @@ async function runBackup() {
 }
 
 async function executeBackup(isManual = false) {
-  const executionId = Date.now();
-  const startTime = new Date();
+  const { executionId, startTime } = createExecutionContext();
   const triggerType = isManual ? "manual" : "scheduled";
 
   console.log(
     `[${startTime.toISOString()}] Backup job started (ID: ${executionId}, trigger: ${triggerType})`
   );
 
-  const seoulMeta = getSeoulLastUpdated();
-  const sizeMB = await getFolderSize();
-
-  console.log(
-    `📊 Seoul lastUpdated: ${seoulMeta?.lastUpdatedSince || "unknown"}`
-  );
-  console.log(`📦 Data size: ${sizeMB}MB`);
+  const { seoulMeta, sizeMB } = await collectBackupMetadata();
 
   try {
-    await runBackup();
+    await runRcloneSync();
 
-    const endTime = new Date();
-    const duration = (endTime - startTime) / 1000;
-
+    const duration = getDuration(startTime);
     console.log(
-      `✅ [${endTime.toISOString()}] Backup completed successfully (${duration}s)`
+      `✅ [${new Date().toISOString()}] Backup completed successfully (${duration}s)`
     );
 
-    Sentry.captureMessage(`✅ Backup Success`, {
-      level: "info",
-      tags: {
-        service: SENTRY.BACKUP.SERVICE_NAME,
-        trigger: triggerType,
-      },
-      extra: {
+    captureSuccess(`✅ Backup Success`, {
+      monitor: SENTRY.BACKUP,
+      triggerType,
+      extraData: {
         executionId: executionId.toString(),
         duration: `${duration}s`,
-        sizeMB: sizeMB,
+        sizeMB,
         seoulLastUpdated: seoulMeta?.lastUpdatedSince,
         seoulTotalCount: seoulMeta?.totalArrayCount,
-        timestamp: endTime.toISOString(),
       },
     });
 
     await Sentry.flush(TIMEOUTS.SENTRY_FLUSH);
+    return { success: true, duration };
   } catch (error) {
-    const endTime = new Date();
-    const duration = (endTime - startTime) / 1000;
-
+    const duration = getDuration(startTime);
     console.error("❌ Backup failed:", error.message);
 
-    Sentry.captureException(error, {
-      level: "error",
-      tags: {
-        service: SENTRY.BACKUP.SERVICE_NAME,
-        trigger: triggerType,
-        executionId: executionId.toString(),
-      },
-      extra: {
+    captureError(error, {
+      monitor: SENTRY.BACKUP,
+      executionId,
+      startTime,
+      duration,
+      extraTags: { trigger: triggerType },
+      extraData: {
         source: BACKUP_CONFIG.source,
         destination: BACKUP_CONFIG.destination,
-        duration: `${duration}s`,
-        sizeMB: sizeMB,
+        sizeMB,
         seoulLastUpdated: seoulMeta?.lastUpdatedSince,
-        errorMessage: error.message,
         stdout: error.stdout,
         stderr: error.stderr,
       },
@@ -146,9 +135,19 @@ async function executeBackup(isManual = false) {
   }
 }
 
-job = schedule.scheduleJob(BACKUP_CONFIG.schedule, async function () {
-  await executeBackup(false);
+let job;
+
+const { gracefulShutdown } = initCronService({
+  serviceName: SENTRY.BACKUP.SERVICE_NAME,
+  tracesSampleRate: SENTRY.BACKUP.TRACES_SAMPLE_RATE,
+  maxBreadcrumbs: SENTRY.BACKUP.MAX_BREADCRUMBS,
+  extraStartInfo: { schedule: BACKUP_CONFIG.schedule },
+  onShutdown: () => job?.cancel(),
 });
+
+console.log("🚀 Backup Cron Service starting...");
+
+job = schedule.scheduleJob(BACKUP_CONFIG.schedule, () => executeBackup(false));
 
 console.log(`✅ Backup job scheduled: ${BACKUP_CONFIG.schedule} (Asia/Seoul)`);
 console.log(`   Source: ${BACKUP_CONFIG.source}`);
@@ -166,3 +165,5 @@ if (process.argv.includes("--manual")) {
       process.exit(1);
     });
 }
+
+module.exports = { executeBackup, gracefulShutdown };
