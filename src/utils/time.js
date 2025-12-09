@@ -125,6 +125,18 @@ function JSDateToConvertedDate(date) {
   return date.toLocaleDateString("ko-KR", options);
 }
 
+function formatKoreanDate(isoString) {
+  if (!isoString) return "unknown";
+  return new Date(isoString).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 module.exports = {
   baseTimes,
   getBaseTimeForGivenTime,
@@ -132,5 +144,5 @@ module.exports = {
   getCurrentBaseDate,
   formatPlusOneHour,
   JSDateToConvertedDate,
+  formatKoreanDate,
 };
-
