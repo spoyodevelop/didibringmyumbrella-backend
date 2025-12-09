@@ -94,7 +94,7 @@ async function executeBackup(isManual = false) {
 
     const duration = getDuration(startTime);
     console.log(
-      `✅ [${new Date().toISOString()}] Backup completed successfully (${duration}s)`
+      `✅ [${new Date().toLocaleString("ko-KR")}] 백업 완료 (${duration}s) 소요`
     );
 
     captureSuccess(`✅ Backup Success`, {
