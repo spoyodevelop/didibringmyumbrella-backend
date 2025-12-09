@@ -1,7 +1,7 @@
 {
   "name": "didibringmyumbrella-cronjob",
   "version": "1.0.1",
-  "description": "Making stats about Probability of precipitation from korea metrorological api",
+  "description": "Making stats about Probability of precipitation from korea meteorological api",
   "main": "cronjob.js",
   "scripts": {
     "test": "jest",
